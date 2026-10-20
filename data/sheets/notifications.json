@@ -1,6 +1,7 @@
 [
     {
         "id":  "1",
+        "status": "draft",
         "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",
@@ -10,6 +11,7 @@
     },
     {
         "id":  "2",
+        "status": "draft",
         "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",

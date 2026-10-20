@@ -1,3 +1,7 @@
 .env
+.env.*
+!.env.example
 uploads/*
 !uploads/.gitkeep
+.ui-test-tools/
+data/review/

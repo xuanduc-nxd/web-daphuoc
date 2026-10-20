@@ -3,3 +3,5 @@
 .env.*
 uploads/*
 !uploads/.gitkeep
+.ui-test-tools
+data/review/

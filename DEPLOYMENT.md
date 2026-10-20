@@ -1,51 +1,58 @@
-# Triển khai website
+# Triển khai Render + Vercel + Supabase
 
-## Trước khi triển khai
+Chuẩn bị project và dữ liệu theo [SUPABASE_SETUP.md](SUPABASE_SETUP.md) trước khi công bố.
 
-- Chỉ đẩy mã nguồn; không đẩy `.env`, mật khẩu hay khóa API. `.env` trên máy cá nhân được Git bỏ qua và Docker loại khỏi image.
-- Nếu khóa SheetDB hoặc mật khẩu admin từng nằm trong Git, tạo giá trị mới rồi cập nhật trong Render.
-- Kiểm tra các liên kết, ảnh, thông tin liên hệ và nội dung trong SheetDB trước khi công bố.
+## Kiến trúc
 
-## Cấu hình Render
+Render chạy toàn bộ website PHP và kết nối Supabase. Vercel chỉ làm điểm vào công khai, chuyển tiếp đường dẫn sang Render bằng external rewrite. Dùng project Vercel có Root Directory là `vercel-proxy`; không chọn thư mục gốc của repository để tránh phục vụ mã PHP như file tĩnh. Mật khẩu và Supabase secret key chỉ đặt ở Render, không đặt trên Vercel.
 
-Service dùng Docker và lắng nghe cổng 10000. Trong **Environment**, đặt:
+## 1. Render
 
-| Tên | Nội dung |
+Tạo Web Service từ repository GitHub này, chọn nhánh chứa bản triển khai, Runtime `Docker`, Root Directory là thư mục gốc. Service dùng Dockerfile hiện có và lắng nghe cổng 10000. Trong Render → Environment đặt:
+
+| Biến | Giá trị |
 | --- | --- |
-| `SHEETDB_API_LINK` | URL gốc của API SheetDB đang dùng |
-| `ADMIN_PASSWORD` | Mật khẩu admin mới, dài và riêng cho website này |
+| APP_ENV | production |
+| APP_PREVIEW_MODE | false |
+| SUPABASE_URL | URL project Supabase |
+| SUPABASE_SECRET_KEY | Secret key dùng riêng cho backend PHP |
 
-`ADMIN_PASSWORD_HASH` vẫn được hỗ trợ nếu không đặt `ADMIN_PASSWORD`.
+Không cần SHEETDB_API_LINK, ADMIN_PASSWORD, ADMIN_PASSWORD_HASH hoặc APP_DATA_DIR. Các biến cũ có thể gỡ sau khi chuyển dữ liệu và kiểm thử thành công.
 
-Các trang dùng SheetDB có bản sao dữ liệu công khai tại `data/sheets/` để tiếp tục hiển thị khi API hoặc biến `SHEETDB_API_LINK` thiếu. Bản sao chỉ phản ánh nội dung tại thời điểm lưu vào Git; đặt `SHEETDB_API_LINK` trong Render để nhận nội dung mới nhất.
+Không đưa .env/secret key vào Git. Docker loại .env khỏi image và đặt `public/` làm Apache DocumentRoot; `app/`, `data/`, `uploads/`, `scripts/` và `tests/` không thể truy cập trực tiếp qua HTTP. Các script khởi tạo chỉ chạy từ CLI.
 
-Không lưu nội dung quản trị trong filesystem của Render Free để sử dụng lâu dài: file ghi trên instance sẽ mất khi service ngủ, khởi động lại hoặc deploy. Cấu hình Supabase trước khi bắt đầu nhập dữ liệu thật.
+Database nằm trên Supabase; ảnh mới và ảnh local được chuyển vào Storage. Website không dùng filesystem tạm của Render để lưu nội dung mới. APP_UPLOAD_DIR chỉ còn dùng khi nhập/đọc ảnh local cũ; sau khi chuyển hết ảnh, website không cần disk để lưu ảnh mới.
 
-## Lưu dữ liệu và ảnh trên Render Free bằng Supabase
+Render Free có chế độ ngủ khi ít truy cập. Supabase Free có giới hạn dung lượng, băng thông và có thể tạm dừng project ít hoạt động. Chọn gói phù hợp nếu cần truy cập liên tục; tham khảo [Render Free](https://render.com/docs/free) và [Supabase pricing](https://supabase.com/pricing).
 
-1. Tạo project Supabase. Trong **SQL Editor**, chạy nội dung `supabase-setup.sql`.
-2. Trong **Storage**, tạo bucket công khai `site-media`, chỉ cho phép JPG, PNG, WebP và GIF, mỗi file tối đa 5 MB.
-3. Trong **Render → Environment**, đặt `SUPABASE_URL` và `SUPABASE_SECRET_KEY` lấy từ Supabase. Chỉ dùng **secret key** phía máy chủ; không đưa key vào mã nguồn, trình duyệt hay URL.
-4. Deploy lại. Lần đọc đầu tiên sẽ sao chép dữ liệu mẫu `data/posts.json`, `data/team.json`, `data/settings.json` vào Supabase nếu chưa có hàng tương ứng. Ảnh admin tải lên sau đó sẽ vào Storage.
-5. Kiểm tra thêm, sửa, xóa một hồ sơ thử và một bài thử; sau khi deploy lại, xác nhận chúng vẫn còn.
+Sau khi Render báo deploy thành công, mở URL `https://<service>.onrender.com/` và kiểm tra trang chủ, `Activities.php`, `Notifications.php`, `admin/login.php` trước khi cấu hình Vercel.
 
-Nếu chỉ đặt một trong hai biến Supabase, ứng dụng sẽ báo lỗi cấu hình thay vì ghi dữ liệu tạm lên Render. Supabase Free cũng có giới hạn và có thể tạm dừng project ít hoạt động; cần theo dõi và sao lưu dữ liệu nếu website được dùng thật.
+## 2. Vercel
 
-Nếu chuyển sang Render trả phí và gắn persistent disk tại `/var/data`, đặt thêm:
+Tạo Project từ cùng repository GitHub. Chọn **Root Directory: `vercel-proxy`** và Framework Preset `Other`. Nếu bản triển khai còn ở nhánh `codex/render-vercel-launch`, vào **Project Settings → Environments → Production → Branch Tracking**, chọn nhánh này rồi lưu; Vercel mặc định lấy `main` nếu repository có nhánh đó. Sau khi đã gộp bản triển khai vào `main`, đổi Production Branch lại thành `main`.
 
-| Tên | Giá trị |
-| --- | --- |
-| `APP_DATA_DIR` | `/var/data/content` |
-| `APP_UPLOAD_DIR` | `/var/data/uploads` |
+Trong Environment Variables đặt `RENDER_ORIGIN` bằng URL gốc của Render, ví dụ `https://ten-dich-vu.onrender.com`, không có dấu `/` ở cuối và không thêm đường dẫn. Biến này chỉ là URL công khai; không đặt Supabase secret key tại đây. Deploy rồi mở URL `.vercel.app` của project.
 
-Ứng dụng sẽ sao chép dữ liệu mẫu từ `data/` vào disk khi file chưa tồn tại. Ảnh mới được phục vụ qua `media.php`.
+File `vercel-proxy/vercel.mjs` chuyển cả trang chủ và mọi đường dẫn con đến Render. Kiểm tra đăng nhập admin, lưu bài nháp, ảnh tải lên, liên kết chi tiết và tìm kiếm qua URL Vercel. Nếu cần tên miền riêng, gắn tên miền vào **Vercel Project** sau khi các kiểm tra này đạt.
 
-## Gắn tên miền sau khi đã có tên miền
+## Trước khi công bố
 
-1. Thêm tên miền tại **Render → service → Settings → Custom Domains**.
-2. Tạo bản ghi DNS theo đúng giá trị Render hiển thị cho tên miền cụ thể.
-3. Bấm **Verify** và đợi HTTPS hoạt động.
-4. Chọn `www` hoặc tên miền gốc làm địa chỉ chính, kiểm tra địa chỉ còn lại chuyển hướng đúng.
-5. Kiểm tra trang chủ, Blog, Giới thiệu, Sinh viên, ảnh, các trang chi tiết và admin qua tên miền mới.
+- Chạy check-supabase.php; xác nhận settings/main và tài khoản admin đã có.
+- Đăng nhập, tạo một bài nháp, kiểm tra nháp không xuất hiện công khai, xuất bản/ẩn/xóa bài thử.
+- Upload một ảnh thử, kiểm tra public URL; deploy lại và xác nhận bản ghi/ảnh vẫn còn.
+- Kiểm tra cập nhật điện thoại/email trong admin phản ánh ở chân trang, Liên hệ và Tài trợ.
+- Xác nhận editor bị chặn khỏi cài đặt, giới thiệu và tài trợ; admin có thể quản lý các mục này.
+- Đối chiếu số lượng bản ghi và các liên kết bài viết trước/sau khi chuyển dữ liệu.
+- Ban chủ nhiệm xác nhận thông tin liên hệ, mạng xã hội và nội dung tài trợ trước khi công bố.
 
-Render tự cấp chứng chỉ HTTPS cho tên miền đã xác minh. Đừng mua hoặc thay đổi DNS khi chưa có tên miền và quyền quản lý DNS.
+## Tên miền
+
+Gắn tên miền công khai vào Vercel Project → Settings → Domains, đặt DNS theo giá trị Vercel cung cấp rồi xác minh. Giữ URL `onrender.com` làm upstream cho Vercel. Supabase tiếp tục dùng URL project mặc định; không cần add-on tên miền riêng cho API.
+
+Kiểm tra cả trang chủ, các trang nội dung, admin, ảnh và HTTPS qua tên miền. [Tài liệu Domains của Vercel](https://vercel.com/docs/domains).
+
+## Sao lưu
+
+Lưu bản sao ngoài Supabase cho cả database và ảnh. Backup database không bao gồm file Storage. Không xóa data/ và uploads/ cũ cho đến khi đã đối chiếu dữ liệu, chuyển ảnh, xác nhận trên project thật và có bản sao dự phòng.
+
+Nếu project từng dùng bảng site_data JSONB cũ, SQL mới giữ nguyên bảng đó. Script nhập hiện lấy nguồn từ file local; cần xuất dữ liệu mới nhất từ site_data riêng trước khi nhập nếu trên server có dữ liệu mới hơn bản local.

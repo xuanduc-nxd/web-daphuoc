@@ -1,15 +1,17 @@
 [
     {
         "id":  "1",
-        "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
+        "status": "published",
+        "title":  "Lưu trữ: Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",
         "author":  "BĐH Quỹ",
-        "excerpt":  "Chào mừng năm học mới, chúng tôi chính thức công bố chương trình hỗ trợ tài chính đặc biệt dành riêng cho các bạn học sinh, sinh viên luôn nỗ lực vươn lên trong học tập nhưng đang gặp trở ngại về kinh tế.",
+        "excerpt":  "Thông báo lưu trữ: thời hạn nhận hồ sơ của đợt 2026 đã kết thúc ngày 30/05/2026. Vui lòng xem thông báo mới nhất trước khi chuẩn bị hồ sơ.",
         "content":  "Chào mừng năm học mới, chúng tôi chính thức công bố chương trình hỗ trợ tài chính đặc biệt dành riêng cho các bạn học sinh, sinh viên luôn nỗ lực vươn lên trong học tập nhưng đang gặp trở ngại về kinh tế.\u003cbr\u003e\u003cbr\u003e1. Mục tiêu chương trình\u003cbr\u003eChương trình không chỉ dừng lại ở việc trao tặng các gói hỗ trợ tài chính, mà chúng tôi còn mong muốn được đồng hành cùng các em thông qua các buổi định hướng nghề nghiệp, đào tạo ngoại ngữ và phát triển kỹ năng mềm hoàn toàn miễn phí.\u003cbr\u003e\u003cbr\u003e2. Điều kiện tham gia\u003cbr\u003eSinh viên đang theo học hệ chính quy tại các trường Đại học, Cao đẳng trên toàn quốc.\u003cbr\u003eCó sổ hộ nghèo, cận nghèo hoặc giấy xác nhận hoàn cảnh khó khăn có mộc đỏ của địa phương.\u003cbr\u003eĐiểm trung bình học kỳ gần nhất đạt từ Khá trở lên, điểm rèn luyện loại Tốt.\u003cbr\u003e\u003cbr\u003e3. Lộ trình triển khai\u003cbr\u003eBan tổ chức sẽ bắt đầu nhận hồ sơ trực tuyến từ ngày 20/04/2026 đến hết ngày 30/05/2026. Quá trình phỏng vấn sẽ diễn ra vào đầu tháng 6 và kết quả dự kiến được công bố trước thềm năm học mới.\u003cbr\u003e\u003cbr\u003eChúng tôi hy vọng sự tiếp sức nhỏ bé này sẽ giúp các bạn vững bước hơn trên con đường chinh phục tri thức và xây dựng tương lai."
     },
     {
         "id":  "2",
+        "status": "draft",
         "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",
@@ -19,6 +21,7 @@
     },
     {
         "id":  "3",
+        "status": "draft",
         "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",
@@ -28,6 +31,7 @@
     },
     {
         "id":  "4",
+        "status": "draft",
         "title":  "Phát động chương trình hỗ trợ sinh viên \"Tiếp Bước Giảng Đường\" 2026",
         "image":  "https://res.cloudinary.com/dbc1ssw27/image/upload/v1774438636/hslxdaogojuetpcsl5k2.jpg",
         "date":  "Wed Mar 25 2026 00:00:00 GMT+0700 (Giờ Đông Dương)",
