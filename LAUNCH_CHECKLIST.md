@@ -36,10 +36,12 @@ Cập nhật ngày 20/10/2026. Dùng danh sách này để theo dõi việc chu�
 
 ## Cần triển khai
 
-- [ ] Rà soát và commit các thay đổi hiện còn trong bản làm việc trước khi triển khai.
-- [ ] Xác nhận ứng dụng chạy sạch trên PHP 8.2 của Dockerfile; PHP cục bộ hiện là 8.0.
-- [ ] Tạo dịch vụ Render từ Dockerfile, đặt biến môi trường theo `DEPLOYMENT.md`.
-- [ ] Kiểm tra URL Render, quyền quản trị, ảnh và dữ liệu sau khi triển khai lại.
-- [ ] Tạo Vercel Project từ `vercel-proxy` và kiểm tra URL `.vercel.app`.
-- [ ] Gắn tên miền vào Vercel, kiểm tra HTTPS và sao lưu database cùng ảnh Storage.
-- [ ] Ban chủ nhiệm duyệt nội dung cuối cùng trên tên miền chính thức.
+- [x] Rà soát, commit và đẩy bản triển khai lên nhánh `main` của `xuanduc-nxd/web-daphuoc`.
+- [x] Dockerfile dùng PHP 8.2; dịch vụ Render đã build và chạy công khai.
+- [x] Tạo Render Web Service tại `https://web-daphuoc.onrender.com` với Supabase thật.
+- [x] Kiểm tra trang chủ, Hoạt động, Thông báo, đăng nhập, bài đã xuất bản và ảnh trên Render.
+- [x] Tạo Vercel Project từ `vercel-proxy`; `https://web-daphuoc-vercel-proxy.vercel.app` trả HTTP 200 cho các trang chính và đăng nhập quản trị thành công.
+- [ ] Kiểm thử lưu bài nháp kèm ảnh qua URL Vercel.
+- [ ] Sao lưu database và ảnh Storage ra ngoài Supabase.
+- [ ] Nếu có tên miền riêng, gắn vào Vercel và kiểm tra HTTPS.
+- [ ] Ban chủ nhiệm duyệt nội dung cuối cùng trước khi quảng bá website rộng rãi.
