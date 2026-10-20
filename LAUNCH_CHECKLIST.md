@@ -40,6 +40,6 @@ Cập nhật ngày 20/10/2026. Dùng danh sách này để theo dõi việc chu�
 - [ ] Xác nhận ứng dụng chạy sạch trên PHP 8.2 của Dockerfile; PHP cục bộ hiện là 8.0.
 - [ ] Tạo dịch vụ Render từ Dockerfile, đặt biến môi trường theo `DEPLOYMENT.md`.
 - [ ] Kiểm tra URL Render, quyền quản trị, ảnh và dữ liệu sau khi triển khai lại.
-- [ ] Tạo Vercel Project từ `vercel-proxy`, đặt `RENDER_ORIGIN` và kiểm tra URL `.vercel.app`.
+- [ ] Tạo Vercel Project từ `vercel-proxy` và kiểm tra URL `.vercel.app`.
 - [ ] Gắn tên miền vào Vercel, kiểm tra HTTPS và sao lưu database cùng ảnh Storage.
 - [ ] Ban chủ nhiệm duyệt nội dung cuối cùng trên tên miền chính thức.

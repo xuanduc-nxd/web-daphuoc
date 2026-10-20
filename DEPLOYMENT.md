@@ -29,11 +29,11 @@ Sau khi Render báo deploy thành công, mở URL `https://<service>.onrender.co
 
 ## 2. Vercel
 
-Tạo Project từ cùng repository GitHub. Chọn **Root Directory: `vercel-proxy`** và Framework Preset `Other`. Nếu bản triển khai còn ở nhánh `codex/render-vercel-launch`, vào **Project Settings → Environments → Production → Branch Tracking**, chọn nhánh này rồi lưu; Vercel mặc định lấy `main` nếu repository có nhánh đó. Sau khi đã gộp bản triển khai vào `main`, đổi Production Branch lại thành `main`.
+Tạo Project từ repository `xuanduc-nxd/web-daphuoc`, nhánh `main`. Chọn **Root Directory: `vercel-proxy`** và Framework Preset `Other`.
 
-Trong Environment Variables đặt `RENDER_ORIGIN` bằng URL gốc của Render, ví dụ `https://ten-dich-vu.onrender.com`, không có dấu `/` ở cuối và không thêm đường dẫn. Biến này chỉ là URL công khai; không đặt Supabase secret key tại đây. Deploy rồi mở URL `.vercel.app` của project.
+File `vercel-proxy/vercel.json` đã đặt đích chuyển tiếp là `https://web-daphuoc.onrender.com`. Không cần biến môi trường trên Vercel. Nếu đã tạo `RENDER_ORIGIN` trong project Vercel, có thể xóa biến này sau khi deploy thành công; nó không chứa bí mật.
 
-File `vercel-proxy/vercel.mjs` chuyển cả trang chủ và mọi đường dẫn con đến Render. Kiểm tra đăng nhập admin, lưu bài nháp, ảnh tải lên, liên kết chi tiết và tìm kiếm qua URL Vercel. Nếu cần tên miền riêng, gắn tên miền vào **Vercel Project** sau khi các kiểm tra này đạt.
+Deploy rồi mở URL `.vercel.app` của project. Kiểm tra đăng nhập admin, lưu bài nháp, ảnh tải lên, liên kết chi tiết và tìm kiếm qua URL Vercel. Nếu cần tên miền riêng, gắn tên miền vào **Vercel Project** sau khi các kiểm tra này đạt. Nếu URL Render thay đổi, cập nhật hai `destination` trong `vercel-proxy/vercel.json` và đẩy lại lên GitHub.
 
 ## Trước khi công bố
 

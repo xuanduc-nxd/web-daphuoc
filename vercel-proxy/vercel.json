@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "https://web-daphuoc.onrender.com/"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://web-daphuoc.onrender.com/:path*"
+    }
+  ]
+}
