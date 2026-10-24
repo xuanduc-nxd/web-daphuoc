@@ -11,7 +11,7 @@ try {
     $env:ADMIN_SETUP_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($setupPointer)
     $setupArguments = @("--username", $Username, "--role", $Role)
     if ($Name.Trim() -ne "") { $setupArguments += @("--name", $Name) }
-    & php (Join-Path $PSScriptRoot "create-admin.php") @setupArguments
+    & node --experimental-strip-types (Join-Path $PSScriptRoot "create-admin.ts") @setupArguments
     if ($LASTEXITCODE -ne 0) { throw "Không tạo được tài khoản. Kiểm tra thông báo phía trên." }
 } finally {
     [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($setupPointer)

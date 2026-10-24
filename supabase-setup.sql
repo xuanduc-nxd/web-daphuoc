@@ -11,15 +11,21 @@ create table if not exists public.posts (
     content text not null default '',
     content_format text not null default 'plain' check (content_format in ('plain', 'html')),
     image text not null default '',
+    gallery jsonb not null default '[]'::jsonb,
     author text not null default '',
     role text not null default '',
     date date,
     status text not null default 'draft' check (status in ('draft', 'published')),
+    pinned boolean not null default false,
+    expires_on date,
     version integer not null default 1 check (version > 0),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (kind, legacy_id)
 );
+alter table public.posts add column if not exists gallery jsonb not null default '[]'::jsonb;
+alter table public.posts add column if not exists pinned boolean not null default false;
+alter table public.posts add column if not exists expires_on date;
 create index if not exists posts_public_listing on public.posts (kind, status, date desc, id);
 
 create table if not exists public.members (
@@ -30,12 +36,18 @@ create table if not exists public.members (
     school text not null default '',
     major text not null default '',
     detail text not null default '',
+    direction text not null default '',
+    support_needs text not null default '',
+    expertise text not null default '',
     image text not null default '',
     sort_order integer not null default 0,
     version integer not null default 1,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
+alter table public.members add column if not exists direction text not null default '';
+alter table public.members add column if not exists support_needs text not null default '';
+alter table public.members add column if not exists expertise text not null default '';
 create index if not exists members_listing on public.members (type, sort_order, id);
 
 create table if not exists public.sponsors (
@@ -153,8 +165,8 @@ revoke all on function public.consume_admin_login_attempt(text) from public, ano
 grant execute on function public.consume_admin_login_attempt(text) to service_role;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('site-media', 'site-media', true, 5242880, array['image/jpeg','image/png','image/webp','image/gif'])
-on conflict (id) do nothing;
+values ('site-media', 'site-media', true, 20971520, array['image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do update set file_size_limit = excluded.file_size_limit;
 
 notify pgrst, 'reload schema';
 commit;

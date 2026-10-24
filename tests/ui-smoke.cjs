@@ -37,10 +37,9 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       "/ExecutiveBoard.php",
       "/Students.php",
       "/HonorList.php",
-      "/Sponsorship.php",
-      "/search.php",
       "/contact.php",
     ];
+    if (process.env.UI_TEST_GALLERY_URL) routes.push(process.env.UI_TEST_GALLERY_URL);
     for (const width of process.env.UI_SKIP_LAYOUT === "1"
       ? []
       : [1440, 768, 375, 320]) {
@@ -51,12 +50,6 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
         });
         assert.equal(response.status(), 200, route + " HTTP");
         assert.equal(await page.locator("h1").count(), 1, route + " H1");
-        assert(
-          !/Fatal error|Warning:|Deprecated:/.test(
-            await page.locator("body").innerText(),
-          ),
-          route + " PHP",
-        );
         assert.equal(
           await page.evaluate(
             () => document.documentElement.scrollWidth > innerWidth,
@@ -116,13 +109,40 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
         "Liên kết hoạt động",
       );
     await page.goto(activityLinks[0], { waitUntil: "networkidle" });
-    await page.locator("[data-lightbox]").click();
+    await page.locator("[data-lightbox]").first().click();
     assert(await page.locator("#image-dialog").isVisible());
     await page.keyboard.press("Escape");
     assert.equal(await page.locator("#image-dialog").isVisible(), false);
     await page.locator("[data-copy-link]").click();
     await page.locator("#ui-toast").waitFor({ state: "visible" });
     assert.match(await page.locator("#ui-toast").innerText(), /Đã sao chép/);
+    if (process.env.UI_TEST_GALLERY_URL) {
+      await page.setViewportSize({width:1280,height:900});
+      await page.goto(base + process.env.UI_TEST_GALLERY_URL, {waitUntil:"networkidle"});
+      assert.equal(await page.locator('[data-gallery-group="activity"]').count(),5,"Album has cover and four more photos");
+      const track = page.locator("[data-gallery-track]");
+      const layout = await track.evaluate(element => ({
+        overflow: element.scrollWidth > element.clientWidth,
+        tops: [...element.children].map(child => Math.round(child.getBoundingClientRect().top)),
+      }));
+      assert(layout.overflow,"Album has horizontal overflow");
+      assert.equal(new Set(layout.tops).size,1,"All album photos stay on one row");
+      await page.locator("[data-gallery-scroll-next]").click();
+      await page.waitForFunction(() => document.querySelector("[data-gallery-track]").scrollLeft > 10);
+      assert.equal(await page.locator("[data-gallery-scroll-previous]").isDisabled(),false);
+      await page.locator(".article-cover").click();
+      assert(await page.locator("[data-gallery-next]").isVisible());
+      const coverSrc = await page.locator("#image-dialog-image").getAttribute("src");
+      await page.locator("[data-gallery-next]").click();
+      assert.notEqual(await page.locator("#image-dialog-image").getAttribute("src"),coverSrc);
+      await page.keyboard.press("ArrowLeft");
+      assert.equal(await page.locator("#image-dialog-image").getAttribute("src"),coverSrc);
+      await page.keyboard.press("Escape");
+      await page.setViewportSize({width:375,height:900});
+      await page.reload({waitUntil:"networkidle"});
+      assert(await track.evaluate(element => element.scrollWidth > element.clientWidth),"Mobile album can scroll sideways");
+      await page.setViewportSize({width:320,height:900});
+    }
     const missing = await page.goto(base + "/detail.php?id=ui-not-found", {
       waitUntil: "networkidle",
     });
@@ -130,28 +150,14 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
     console.log(
       "Search, empty state, article links, image dialog, copy and 404 passed",
     );
-    await page.goto(base + "/search.php?category=Thông%20báo", {
-      waitUntil: "networkidle",
-    });
-    assert.equal(
-      await page.locator("[data-category-filter]").inputValue(),
-      "Thông báo",
-    );
-    assert(
-      await page
-        .locator("[data-filter-item]:visible")
-        .evaluateAll((items) =>
-          items.every((item) => item.dataset.category === "Thông báo"),
-        ),
-    );
-    await page.goto(base + "/Sponsorship.php", { waitUntil: "networkidle" });
-    assert.equal(await page.locator("[data-support-choice]").count(), 0);
-    assert(
-      (await page.locator("main").innerText()).includes(
-        "Thông tin chương trình đang được xác nhận",
-      ),
-    );
-    console.log("Search category and unapproved sponsorship content hidden passed");
+    await page.goto(base + "/Notifications.php", {waitUntil:"networkidle"});
+    assert.equal(await page.locator("[data-filter-item]:visible").first().getAttribute("data-pinned"),"1","Pinned notice stays first after client sorting");
+    assert(!(await page.locator("body").innerText()).includes("Thông báo đã hết hạn"));
+    for (const route of ["/Sponsorship.php", "/search.php"]) {
+      const response = await page.goto(base + route, {waitUntil:"networkidle"});
+      assert.equal(response.status(),404,route + " removed");
+    }
+    console.log("Removed pages and expired notifications passed");
     if (password) {
       await page.goto(base + "/admin/login.php", { waitUntil: "networkidle" });
       await page.locator("[data-toggle-password]").click();
@@ -173,6 +179,8 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
           "/admin/team.php?type=board",
           "/admin/team.php?type=student",
           "/admin/post-edit.php",
+          "/admin/post-edit.php?kind=activity",
+          "/admin/post-edit.php?kind=notification",
           "/admin/team-edit.php?type=student",
           "/admin/settings.php",
           "/admin/content.php?type=sponsor",
@@ -197,6 +205,16 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
             ),
             route,
           );
+        }
+      }
+      if (process.env.UI_TEST_GALLERY_EDIT_URL) {
+        await page.setViewportSize({width:375,height:900});
+        await page.goto(base + process.env.UI_TEST_GALLERY_EDIT_URL,{waitUntil:"networkidle"});
+        assert.equal(await page.locator("[data-gallery-item]").count(),5);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false,"Gallery editor fits mobile width");
+        if (output) {
+          fs.mkdirSync(output,{recursive:true});
+          await page.screenshot({path:path.join(output,"gallery-editor-mobile.png"),fullPage:true});
         }
       }
       await page.goto(base + "/admin/index.php", { waitUntil: "networkidle" });
@@ -257,6 +275,19 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       );
       await page.locator("[data-image-preview]").waitFor({state:"visible"});
       assert(await page.locator("[data-image-preview]").isVisible());
+      await page.locator('[name="kind"]').selectOption("activity");
+      assert(await page.locator('[data-kind-section="activity"]').isVisible());
+      await page.locator("[data-gallery-input]").setInputFiles([
+        path.resolve(__dirname,"fixtures/upload.png"),
+        path.resolve(__dirname,"fixtures/upload.png"),
+      ]);
+      assert.equal(await page.locator(".gallery-new-item").count(),2,"Album previews selected images");
+      await page.locator('[name="kind"]').selectOption("notification");
+      assert(await page.locator('[data-kind-section="notification"]').isVisible());
+      assert.equal(await page.locator('[data-kind-section="activity"]').isVisible(),false);
+      await page.goto(base + "/admin/team-edit.php?type=student", {waitUntil:"networkidle"});
+      assert.equal(await page.locator('[name="image"]').count(),0,"Student editor excludes photo");
+      assert(await page.locator('[name="direction"]').isVisible());
       await page.goto(base + "/admin/posts.php", { waitUntil: "networkidle" });
       if ((await page.locator("form[data-confirm]").count()) > 0) {
         const first = page.locator("form[data-confirm]").first();

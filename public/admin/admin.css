@@ -328,6 +328,14 @@
   padding: 0;
   overflow-x: auto;
 }
+.student-table table {
+  min-width: 1100px;
+}
+.student-table td:nth-child(4),
+.student-table td:nth-child(5) {
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -579,6 +587,90 @@ td small {
   accent-color: var(--accent);
   width: 16px;
   height: 16px;
+}
+.gallery-editor,
+.notification-options {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin: 8px 0 24px;
+  background: var(--surface-soft);
+}
+.gallery-editor h2,
+.notification-options h2 {
+  font-size: 19px;
+  margin-bottom: 7px;
+}
+.gallery-editor > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.gallery-edit-item {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 13px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+}
+.gallery-edit-item img {
+  width: 120px;
+  height: 85px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 7px;
+}
+.gallery-edit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+}
+.gallery-edit-controls strong {
+  min-width: 55px;
+  font-size: 13px;
+}
+.editor-form .gallery-edit-controls label,
+.editor-form .gallery-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-weight: 400;
+}
+.editor-form .gallery-edit-controls input[type="number"] {
+  width: 68px;
+  min-height: 34px;
+  margin: 0;
+  padding: 5px 8px;
+}
+.editor-form .gallery-choice input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+.editor-form .gallery-choice input[type="radio"] {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+}
+.gallery-new-item {
+  justify-content: flex-start;
+}
+.notification-options > .gallery-choice {
+  margin: 12px 0 18px;
+}
+@media (max-width: 600px) {
+  .gallery-editor,
+  .notification-options { padding: 16px; }
+  .gallery-edit-item { align-items: flex-start; gap: 12px; }
+  .gallery-edit-item img { width: 82px; height: 70px; }
+  .gallery-edit-controls { gap: 10px; }
 }
 .confirm-dialog {
   width: min(420px, calc(100% - 36px));

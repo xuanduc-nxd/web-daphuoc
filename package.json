@@ -1,0 +1,33 @@
+{
+  "name": "clb-golf-da-phuoc",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "dev": "node --watch --experimental-strip-types src/server.ts",
+    "check": "tsc --noEmit && node --experimental-strip-types --test tests/node/*.test.ts",
+    "test:integration": "node tests/node/supabase-integration.cjs",
+    "migrate": "node --experimental-strip-types scripts/migrate-supabase.ts",
+    "create-admin": "node --experimental-strip-types scripts/create-admin.ts",
+    "check-supabase": "node --experimental-strip-types scripts/check-supabase.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "busboy": "^1.6.0",
+    "file-type": "^22.2.0",
+    "image-size": "^2.0.4",
+    "sanitize-html": "^2.18.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/busboy": "^1.5.5",
+    "@types/node": "^26.6.5",
+    "@types/sanitize-html": "^2.16.2",
+    "playwright-core": "^1.64.1",
+    "typescript": "^7.0.2"
+  }
+}

@@ -129,9 +129,9 @@
         !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
           file.type,
         ) ||
-        file.size > 5 * 1024 * 1024
+        file.size > 20 * 1024 * 1024
       ) {
-        const message = "Chọn ảnh JPG, PNG, WebP hoặc GIF tối đa 5 MB.";
+        const message = "Chọn ảnh JPG, PNG, WebP hoặc GIF tối đa 20 MB.";
         input.setCustomValidity(message);
         if (error) {
           error.textContent = message;
@@ -172,6 +172,72 @@
   });
   const editor = document.querySelector("[data-post-editor]");
   const preview = document.getElementById("post-preview-dialog");
+  if (editor) {
+    const kind = editor.elements.namedItem("kind");
+    const updateKind = () => {
+      const value = kind?.value || "";
+      editor.querySelectorAll("[data-kind-section]").forEach((section) => {
+        section.hidden = section.dataset.kindSection !== value;
+      });
+      const singleImage = editor.querySelector("[data-single-image-section]");
+      if (singleImage) singleImage.hidden = value === "activity";
+    };
+    kind?.addEventListener("change", updateKind);
+    updateKind();
+    const galleryInput = editor.querySelector("[data-gallery-input]");
+    const galleryNew = editor.querySelector("[data-gallery-new]");
+    const galleryError = editor.querySelector("[data-gallery-error]");
+    let galleryUrls = [];
+    const clearGalleryPreviews = () => {
+      galleryUrls.forEach((url) => URL.revokeObjectURL(url));
+      galleryUrls = [];
+      galleryNew?.replaceChildren();
+    };
+    galleryInput?.addEventListener("change", () => {
+      clearGalleryPreviews();
+      galleryInput.setCustomValidity("");
+      galleryError.hidden = true;
+      const files = [...galleryInput.files];
+      const kept = [...editor.querySelectorAll("[data-gallery-item]")].filter(
+        (item) => !item.querySelector('[name="gallery_remove[]"]')?.checked,
+      ).length;
+      if (
+        files.length + kept > 20 ||
+        files.some(
+          (file) =>
+            !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type) ||
+            file.size > 20 * 1024 * 1024,
+        )
+      ) {
+        const message = "Album tối đa 20 ảnh; mỗi ảnh là JPG, PNG, WebP hoặc GIF không quá 20 MB.";
+        galleryInput.setCustomValidity(message);
+        galleryError.textContent = message;
+        galleryError.hidden = false;
+        galleryInput.reportValidity();
+        return;
+      }
+      files.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        galleryUrls.push(url);
+        const item = document.createElement("div");
+        item.className = "gallery-edit-item gallery-new-item";
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Ảnh mới " + (index + 1);
+        const label = document.createElement("label");
+        label.className = "gallery-choice";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "gallery_cover";
+        radio.value = "new:" + index;
+        if (!editor.querySelector('[name="gallery_cover"]:checked')) radio.checked = true;
+        label.append(radio, " Đặt làm ảnh đại diện");
+        item.append(img, label);
+        galleryNew.appendChild(item);
+      });
+    });
+    window.addEventListener("pagehide", clearGalleryPreviews);
+  }
   document
     .querySelector("[data-post-preview]")
     ?.addEventListener("click", () => {
@@ -189,7 +255,9 @@
       ]
         .filter(Boolean)
         .join(" · ");
-      const image = editor.querySelector("[data-image-preview]");
+      const image = editor.elements.namedItem("kind")?.value === "activity"
+        ? editor.querySelector('[name="gallery_cover"]:checked')?.closest(".gallery-edit-item")?.querySelector("img")
+        : editor.querySelector("[data-image-preview]");
       const previewImage = preview.querySelector("[data-preview-image]");
       previewImage.hidden = !image || image.hidden;
       if (image && !image.hidden) previewImage.src = image.src;

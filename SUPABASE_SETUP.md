@@ -2,13 +2,19 @@
 
 ## 1. Tạo project
 
-Vào [Supabase Dashboard](https://supabase.com/dashboard), tạo một project riêng cho website, có thể đặt tên clb-golf-da-phuoc. Gói Free phù hợp để phát triển và chạy thử. Chọn khu vực gần nơi chạy PHP; lưu mật khẩu database trong nơi quản lý mật khẩu của bạn.
+Vào [Supabase Dashboard](https://supabase.com/dashboard), tạo một project riêng cho website, có thể đặt tên clb-golf-da-phuoc. Gói Free phù hợp để phát triển và chạy thử. Chọn khu vực gần nơi chạy Node.js; lưu mật khẩu database trong nơi quản lý mật khẩu của bạn.
 
 Mật khẩu database, secret key và mật khẩu đăng nhập admin website là ba giá trị khác nhau.
 
 ## 2. Tạo bảng và Storage
 
 Mở SQL Editor → New query. Sao chép **toàn bộ** [supabase-setup.sql](supabase-setup.sql), từ `begin;` đến `commit;`, rồi Run. Nếu đang bôi chọn một đoạn SQL trong editor, bỏ vùng chọn trước khi Run; chạy riêng dòng bắt đầu bằng `id text ...` sẽ báo lỗi cú pháp vì thiếu câu lệnh `create table (...)`.
+
+Nếu project đã chạy website trước đây, chạy lại toàn bộ SQL này trước khi triển khai mã mới. Các lệnh `add column if not exists` bổ sung album ảnh, ghim/hết hạn thông báo, định hướng, nhu cầu hỗ trợ và lĩnh vực chuyên môn của sinh viên vào bảng hiện có mà không xóa bài hoặc hồ sơ.
+
+Nếu trang tạo bài báo bảng `posts` thiếu cột `gallery`, `pinned` hoặc `expires_on`, có thể chạy riêng [supabase-posts-columns.sql](supabase-posts-columns.sql) trong SQL Editor. Đây là bản cập nhật tối thiểu cho bài viết hiện có; sau khi chạy, dùng `npm run check-supabase` để xác nhận cả ba cột đã tồn tại.
+
+Để cập nhật riêng hồ sơ sinh viên trên project hiện có, chạy [supabase-student-fields.sql](supabase-student-fields.sql) trong SQL Editor. Lệnh bổ sung các cột `direction`, `support_needs` và `expertise` còn thiếu, giữ nguyên hồ sơ hiện có. Sau đó chạy `npm run check-supabase` để xác nhận.
 
 SQL tạo:
 
@@ -19,14 +25,14 @@ SQL tạo:
 | sponsors | Danh sách tri ân |
 | about_sections | Tôn chỉ, phạm vi, mục tiêu, phương thức |
 | settings | Thông tin website, liên hệ và ảnh trang chủ |
-| admin_users | Tài khoản quản trị website PHP |
+| admin_users | Tài khoản quản trị website |
 | admin_login_attempts | Giới hạn thử đăng nhập |
 
-Bucket site-media công khai dùng cho ảnh trên website, tối đa 5 MB/file và chỉ nhận JPG, PNG, WebP, GIF. Không dùng bucket này cho hồ sơ hoặc giấy tờ riêng tư.
+Bucket site-media công khai dùng cho ảnh trên website, tối đa 20 MB/file và chỉ nhận JPG, PNG, WebP, GIF. Nếu bucket đã tồn tại với giới hạn 5 MB, chạy lại toàn bộ supabase-setup.sql để cập nhật giới hạn. Trong Supabase Storage Settings, kiểm tra Global file size limit đạt ít nhất 20 MB. Không dùng bucket này cho hồ sơ hoặc giấy tờ riêng tư.
 
-Các bảng bật RLS và chỉ cấp quyền cho service_role. Người xem truy cập nội dung qua PHP; trình duyệt không nhận secret key. Phân quyền admin/editor được kiểm tra trong PHP trước mỗi request quản trị. Bảng site_data cũ được giữ nguyên nếu đã tồn tại.
+Các bảng bật RLS và chỉ cấp quyền cho service_role. Người xem truy cập nội dung qua Node.js; trình duyệt không nhận secret key. Phân quyền admin/editor được kiểm tra trên máy chủ trước mỗi request quản trị. Bảng site_data cũ được giữ nguyên nếu đã tồn tại.
 
-Website dùng đăng nhập PHP và mật khẩu băm trong admin_users. Không cần tạo user trong mục Authentication của Supabase cho phiên bản này.
+Website dùng phiên đăng nhập Node.js và mật khẩu băm bcrypt trong admin_users. Hash bcrypt từ bản PHP cũ vẫn dùng được; không cần tạo user trong mục Authentication của Supabase cho phiên bản này.
 
 ## 3. Cấu hình trên máy
 
@@ -44,12 +50,12 @@ Khi chưa có cả hai giá trị Supabase, website trên máy chỉ xem dữ li
 
 Kiểm tra trước; bước này không gọi API hoặc thay đổi file:
 
-    php scripts/migrate-supabase.php --dry-run
+    npm run migrate -- --dry-run
 
 Sau khi kiểm tra số lượng và ảnh nguồn, nhập:
 
-    php scripts/migrate-supabase.php --apply
-    php scripts/check-supabase.php
+    npm run migrate -- --apply
+    npm run check-supabase
 
 Script giữ id của Blog local và các hồ sơ. Bài SheetDB có id mới theo loại, đồng thời lưu legacy_id để các liên kết cũ vẫn được tìm đúng. Blog trong bản sao Sheets trước đây không được trang Blog hiện tại sử dụng; những bài này được nhập làm bản nháp để Ban chủ nhiệm xem lại trước khi xuất bản.
 
@@ -73,7 +79,7 @@ Tạo tài khoản biên tập khi cần:
 
 Admin được quản lý mọi mục. Editor được quản lý bài viết và thành viên, không được đổi cài đặt, giới thiệu và tài trợ. Để thu hồi quyền, đặt disabled=true trong admin_users; phiên của tài khoản sẽ bị từ chối ở request tiếp theo. Thay đổi tài khoản hoặc mật khẩu làm tăng version và yêu cầu đăng nhập lại; quyền mới được áp dụng sau khi đăng nhập.
 
-Trên Linux/macOS có thể đặt ADMIN_SETUP_PASSWORD tạm trong môi trường tiến trình rồi chạy scripts/create-admin.php --username admin; không ghi mật khẩu trong lệnh hoặc .env.
+Trên Linux/macOS có thể đặt ADMIN_SETUP_PASSWORD tạm trong môi trường tiến trình rồi chạy `npm run create-admin -- --username admin`; không ghi mật khẩu trong lệnh hoặc .env.
 
 ## 6. Kiểm tra trước khi đưa lên web
 

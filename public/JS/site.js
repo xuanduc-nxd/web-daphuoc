@@ -178,14 +178,17 @@
           (!year?.value || item.dataset.year === year.value),
       );
       filtered.sort((a, b) =>
-        sort?.value === "az"
+        (collection.hasAttribute("data-pin-first")
+          ? Number(b.dataset.pinned || 0) - Number(a.dataset.pinned || 0)
+          : 0) ||
+        (sort?.value === "az"
           ? (a.dataset.search || a.textContent).localeCompare(
               b.dataset.search || b.textContent,
               "vi",
             )
           : sort?.value === "oldest"
             ? Number(a.dataset.date || 0) - Number(b.dataset.date || 0)
-            : Number(b.dataset.date || 0) - Number(a.dataset.date || 0),
+            : Number(b.dataset.date || 0) - Number(a.dataset.date || 0)),
       );
       const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
       currentPage = Math.min(currentPage, pages);
@@ -285,17 +288,80 @@
       render(false);
     });
   });
+  document.querySelectorAll("[data-article-gallery]").forEach((gallery) => {
+    const track = gallery.querySelector("[data-gallery-track]");
+    const controls = gallery.querySelector(".article-gallery-controls");
+    const previous = gallery.querySelector("[data-gallery-scroll-previous]");
+    const next = gallery.querySelector("[data-gallery-scroll-next]");
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const updateControls = () => {
+      const limit = Math.max(0, track.scrollWidth - track.clientWidth);
+      controls.hidden = limit < 2;
+      previous.disabled = track.scrollLeft <= 1;
+      next.disabled = track.scrollLeft >= limit - 1;
+    };
+    const move = (direction) => {
+      const item = track.querySelector("button");
+      const gap = parseFloat(getComputedStyle(track).gap) || 0;
+      track.scrollBy({
+        left: direction * ((item?.getBoundingClientRect().width || track.clientWidth) + gap),
+        behavior: reducedMotion.matches ? "auto" : "smooth",
+      });
+    };
+    previous.addEventListener("click", () => move(-1));
+    next.addEventListener("click", () => move(1));
+    track.addEventListener("scroll", updateControls, { passive: true });
+    track.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      move(event.key === "ArrowLeft" ? -1 : 1);
+    });
+    window.addEventListener("resize", updateControls);
+    requestAnimationFrame(updateControls);
+  });
   const imageDialog = document.getElementById("image-dialog");
+  let activeGallery = [];
+  let activeGalleryIndex = 0;
+  const showGalleryImage = () => {
+    const button = activeGallery[activeGalleryIndex];
+    if (!button || !imageDialog) return;
+    const source = button.querySelector("img");
+    const img = document.getElementById("image-dialog-image");
+    img.src = button.dataset.lightbox || source?.currentSrc;
+    img.alt = source?.alt || "Ảnh hoạt động";
+    document.getElementById("image-dialog-caption").textContent =
+      activeGallery.length > 1
+        ? `${activeGalleryIndex + 1}/${activeGallery.length} · ${img.alt}`
+        : img.alt;
+  };
+  const changeGalleryImage = (step) => {
+    if (activeGallery.length < 2) return;
+    activeGalleryIndex =
+      (activeGalleryIndex + step + activeGallery.length) % activeGallery.length;
+    showGalleryImage();
+  };
   document.querySelectorAll("[data-lightbox]").forEach((button) => {
     button.addEventListener("click", () => {
       if (!imageDialog) return;
-      const source = button.querySelector("img");
-      const img = document.getElementById("image-dialog-image");
-      img.src = button.dataset.lightbox || source?.currentSrc;
-      img.alt = source?.alt || "Ảnh hoạt động";
-      document.getElementById("image-dialog-caption").textContent = img.alt;
+      activeGallery = button.dataset.galleryGroup
+        ? [...document.querySelectorAll("[data-lightbox][data-gallery-group]")].filter(
+            (item) => item.dataset.galleryGroup === button.dataset.galleryGroup,
+          )
+        : [button];
+      activeGalleryIndex = activeGallery.indexOf(button);
+      imageDialog.querySelector("[data-gallery-previous]").hidden = activeGallery.length < 2;
+      imageDialog.querySelector("[data-gallery-next]").hidden = activeGallery.length < 2;
+      showGalleryImage();
       imageDialog.showModal();
     });
+  });
+  imageDialog?.querySelector("[data-gallery-previous]")?.addEventListener("click", () => changeGalleryImage(-1));
+  imageDialog?.querySelector("[data-gallery-next]")?.addEventListener("click", () => changeGalleryImage(1));
+  imageDialog?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      changeGalleryImage(event.key === "ArrowLeft" ? -1 : 1);
+    }
   });
   document
     .querySelectorAll("[data-close-dialog]")
