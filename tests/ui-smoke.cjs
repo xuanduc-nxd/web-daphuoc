@@ -61,6 +61,19 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
     }
     if (process.env.UI_SKIP_LAYOUT !== "1")
       console.log("Public pages: desktop, tablet, 375px and 320px passed");
+    await page.setViewportSize({width:1440,height:900});
+    await page.goto(base + "/Blog.php", {waitUntil:"networkidle"});
+    const blogForm=page.locator(".blog-share-form");
+    assert(await blogForm.isVisible(),"Anonymous Blog form visible on desktop");
+    assert(await page.locator('.blog-share-form button[type="submit"]').isEnabled());
+    const desktopBlog=await page.locator(".blog-share").evaluate(element => ({intro:element.querySelector(".blog-share-intro").getBoundingClientRect().top,form:element.querySelector(".blog-share-form").getBoundingClientRect().top}));
+    assert(Math.abs(desktopBlog.intro-desktopBlog.form)<4,"Blog intro and form share a row on desktop");
+    await page.setViewportSize({width:375,height:900});
+    await page.reload({waitUntil:"networkidle"});
+    const mobileBlog=await page.locator(".blog-share").evaluate(element => ({intro:element.querySelector(".blog-share-intro").getBoundingClientRect().bottom,form:element.querySelector(".blog-share-form").getBoundingClientRect().top}));
+    assert(mobileBlog.form>mobileBlog.intro,"Blog form stacks below its introduction on mobile");
+    if (output) await page.screenshot({path:path.join(output,"blog-mobile.png"),fullPage:true});
+    console.log("Anonymous Blog form layout passed");
     await page.setViewportSize({ width: 375, height: 900 });
     await page.goto(base + "/", { waitUntil: "networkidle" });
     await page.locator("#menuToggle").click();
@@ -129,6 +142,7 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       assert.equal(new Set(layout.tops).size,1,"All album photos stay on one row");
       await page.locator("[data-gallery-scroll-next]").click();
       await page.waitForFunction(() => document.querySelector("[data-gallery-track]").scrollLeft > 10);
+      await page.waitForFunction(() => !document.querySelector("[data-gallery-scroll-previous]").disabled);
       assert.equal(await page.locator("[data-gallery-scroll-previous]").isDisabled(),false);
       await page.locator(".article-cover").click();
       assert(await page.locator("[data-gallery-next]").isVisible());
@@ -154,7 +168,7 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
     assert.equal(await page.locator("[data-filter-item]:visible").first().getAttribute("data-pinned"),"1","Pinned notice stays first after client sorting");
     assert(!(await page.locator("body").innerText()).includes("Thông báo đã hết hạn"));
     for (const route of ["/Sponsorship.php", "/search.php"]) {
-      const response = await page.goto(base + route, {waitUntil:"networkidle"});
+      const response = await page.request.get(base + route);
       assert.equal(response.status(),404,route + " removed");
     }
     console.log("Removed pages and expired notifications passed");

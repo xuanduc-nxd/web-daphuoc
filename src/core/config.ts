@@ -19,6 +19,7 @@ export type Table = 'posts' | 'members' | 'sponsors' | 'about_sections' | 'setti
 export class StorageError extends Error {}
 export class ConflictError extends Error {}
 export class InputError extends Error {}
+export class RateLimitError extends InputError {}
 
 export const production = () => process.env.APP_ENV === 'production' || Boolean(process.env.RENDER);
 export const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

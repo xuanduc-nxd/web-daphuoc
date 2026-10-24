@@ -164,6 +164,50 @@ $$;
 revoke all on function public.consume_admin_login_attempt(text) from public, anon, authenticated;
 grant execute on function public.consume_admin_login_attempt(text) to service_role;
 
+-- Anonymous Blog submissions are sent by the server as drafts. Limit each
+-- hashed client/address pair to three submissions in an hour, with a wider
+-- network ceiling for visitors who share a proxy or public connection.
+create table if not exists public.public_blog_submission_attempts (
+    id text primary key,
+    attempts integer not null default 0,
+    window_start timestamptz not null default now()
+);
+alter table public.public_blog_submission_attempts enable row level security;
+revoke all on public.public_blog_submission_attempts from public, anon, authenticated;
+grant select, insert, update, delete on public.public_blog_submission_attempts to service_role;
+
+drop function if exists public.consume_public_blog_submission(text);
+create or replace function public.consume_public_blog_submission(attempt_key text, network_key text)
+returns boolean language plpgsql security definer set search_path = pg_catalog, public as $$
+declare used integer;
+begin
+    if attempt_key !~ '^[a-f0-9]{64}$' or network_key !~ '^[a-f0-9]{64}$' then
+        raise exception 'Invalid attempt key';
+    end if;
+    delete from public.public_blog_submission_attempts where window_start < now() - interval '1 day';
+    insert into public.public_blog_submission_attempts (id, attempts, window_start)
+    values (attempt_key, 1, now())
+    on conflict (id) do update set
+        attempts = case when public_blog_submission_attempts.window_start < now() - interval '1 hour'
+            then 1 else public_blog_submission_attempts.attempts + 1 end,
+        window_start = case when public_blog_submission_attempts.window_start < now() - interval '1 hour'
+            then now() else public_blog_submission_attempts.window_start end
+    returning attempts into used;
+    if used > 3 then return false; end if;
+    insert into public.public_blog_submission_attempts (id, attempts, window_start)
+    values (network_key, 1, now())
+    on conflict (id) do update set
+        attempts = case when public_blog_submission_attempts.window_start < now() - interval '1 hour'
+            then 1 else public_blog_submission_attempts.attempts + 1 end,
+        window_start = case when public_blog_submission_attempts.window_start < now() - interval '1 hour'
+            then now() else public_blog_submission_attempts.window_start end
+    returning attempts into used;
+    return used <= 30;
+end;
+$$;
+revoke all on function public.consume_public_blog_submission(text, text) from public, anon, authenticated;
+grant execute on function public.consume_public_blog_submission(text, text) to service_role;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('site-media', 'site-media', true, 20971520, array['image/jpeg','image/png','image/webp','image/gif'])
 on conflict (id) do update set file_size_limit = excluded.file_size_limit;

@@ -14,7 +14,7 @@ const root = path.resolve(__dirname, "../..");
 const node = process.execPath;
 const secret = "sb_secret_local_integration_fixture";
 const password = "ui-review-password-42";
-const tables = ["posts", "members", "sponsors", "about_sections", "settings", "admin_users", "admin_login_attempts"];
+const tables = ["posts", "members", "sponsors", "about_sections", "settings", "admin_users", "admin_login_attempts", "public_blog_submission_attempts"];
 const identifier = value => {
   assert.match(value, /^[a-z_][a-z0-9_]*$/);
   return '"' + value + '"';
@@ -39,6 +39,9 @@ const freePort = async () => {
     await db.exec("create role anon; create role authenticated; create role service_role bypassrls; create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table public.site_data(name text primary key,payload jsonb); insert into public.site_data values('keep', '{\"keep\":true}');");
     const ddl = fs.readFileSync(path.join(root, "supabase-setup.sql"), "utf8");
     await db.exec(ddl);
+    const blogMigration = fs.readFileSync(path.join(root, "supabase-public-blog.sql"), "utf8");
+    await db.exec(blogMigration);
+    await db.exec(blogMigration);
     await db.exec("alter table public.members drop column direction; alter table public.members drop column support_needs; alter table public.members drop column expertise");
     const studentMigration = fs.readFileSync(path.join(root, "supabase-student-fields.sql"), "utf8");
     await db.exec(studentMigration);
@@ -53,6 +56,7 @@ const freePort = async () => {
       await assert.rejects(db.query("select * from public." + identifier(table)), /permission denied/, table + " anonymous access denied");
     }
     await assert.rejects(db.query("select public.consume_admin_login_attempt($1)", ["a".repeat(64)]), /permission denied/);
+    await assert.rejects(db.query("select public.consume_public_blog_submission($1,$2)", ["a".repeat(64),"b".repeat(64)]), /permission denied/);
     await db.exec("reset role");
     console.log("SQL rerun, grants, RLS and legacy data retention passed");
 
@@ -90,6 +94,11 @@ const freePort = async () => {
         if (parts[2] === "rpc" && parts[3] === "consume_admin_login_attempt") {
           const input = JSON.parse(bytes.toString());
           const result = await db.query("select public.consume_admin_login_attempt($1) as allowed", [input.attempt_key]);
+          return send(200, result.rows[0].allowed);
+        }
+        if (parts[2] === "rpc" && parts[3] === "consume_public_blog_submission") {
+          const input = JSON.parse(bytes.toString());
+          const result = await db.query("select public.consume_public_blog_submission($1,$2) as allowed", [input.attempt_key,input.network_key]);
           return send(200, result.rows[0].allowed);
         }
         const table = parts[2];
@@ -339,6 +348,33 @@ const freePort = async () => {
     const blogRemove = {...form,id:blogId,version:"2",kind:"blog",title:"Kiểm thử blog",status:"published",token:field(blogRemoveEditor.html,"token"),remove_image:"1"};
     assert.equal((await request("/admin/post-edit.php?id="+blogId,blogRemove)).status,302);
     assert.equal((await db.query("select image from posts where id=$1",[blogId])).rows[0].image,"","Single-image posts can remove their cover");
+    const adminCookie = cookie;
+    cookie = "";
+    const publicBlogPage = await request("/Blog.php");
+    assert(publicBlogPage.html.includes('name="author"') && publicBlogPage.html.includes('name="content"'),"Blog form available without login");
+    const visitorForm = {started:field(publicBlogPage.html,"started"),token:field(publicBlogPage.html,"token"),author:"Khách ghé thăm",category:"Lời cảm ơn",title:"Cảm ơn CLB <script>alert(1)</script>",content:"Cảm ơn các anh chị đã giúp đỡ sinh viên. <script>alert(1)</script>"};
+    assert.equal((await request("/Blog.php",{...visitorForm,token:"0".repeat(64)})).status,400,"Tampered form token rejected");
+    assert.equal((await request("/Blog.php",{...visitorForm,content:"Quá ngắn"})).status,400,"Invalid visitor content rejected");
+    await new Promise(resolve => setTimeout(resolve,2100));
+    assert.equal((await request("/Blog.php",visitorForm)).status,302,"Anonymous visitor can submit");
+    const visitorPost=(await db.query("select * from posts where title=$1",[visitorForm.title])).rows[0];
+    assert(visitorPost && visitorPost.status === "draft" && visitorPost.kind === "blog" && visitorPost.role === "Lời cảm ơn");
+    assert(!(await request("/Blog.php")).html.includes(visitorForm.title),"Submission stays hidden until approved");
+    assert.equal((await request("/detail_blog.php?id="+visitorPost.id)).status,404,"Draft direct link stays private");
+    cookie = adminCookie;
+    const pendingPage = await request("/admin/posts.php?kind=blog");
+    assert(pendingPage.html.includes("Cảm ơn CLB &lt;script&gt;"),"Visitor draft reaches admin list escaped");
+    assert.equal((await request("/admin/post-status.php",{token:field(pendingPage.html,"token"),id:visitorPost.id,version:String(visitorPost.version)})).status,302,"Admin can approve visitor post");
+    cookie = "";
+    const approvedPage = await request("/Blog.php");
+    assert(approvedPage.html.includes("Cảm ơn CLB &lt;script&gt;") && !approvedPage.html.includes("<script>alert(1)</script>"),"Approved title is escaped");
+    const approvedDetail = await request("/detail_blog.php?id="+visitorPost.id);
+    assert.equal(approvedDetail.status,200);
+    assert(approvedDetail.html.includes("&lt;script&gt;alert(1)&lt;/script&gt;"),"Visitor body is rendered as plain text");
+    for (let index=0; index<2; index++) assert.equal((await request("/Blog.php",{...visitorForm,title:"Cảm nghĩ thử giới hạn " + index})).status,302);
+    assert.equal((await request("/Blog.php",{...visitorForm,title:"Cảm nghĩ vượt giới hạn"})).status,429,"Anonymous submission is limited across requests");
+    cookie = adminCookie;
+    console.log("Anonymous Blog submission, moderation, escaping and shared throttling passed");
     const pinnedPage = await request("/admin/post-edit.php?kind=notification");
     const pinnedNotice = {...form,kind:"notification",title:"Thông báo được ghim",date:"01/01/2020",status:"published",pinned:"1",expires_on:"31/12/2999",token:field(pinnedPage.html,"token")};
     assert.equal((await request("/admin/post-edit.php",pinnedNotice)).status,302);

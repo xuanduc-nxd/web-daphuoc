@@ -4,6 +4,8 @@ Chuẩn bị project và dữ liệu theo [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
 
 Trước khi triển khai phiên bản có album Hoạt động, ghim/hết hạn Thông báo và các trường hồ sơ Sinh viên mới, chạy lại toàn bộ `supabase-setup.sql` hoặc riêng `supabase-student-fields.sql` trên project Supabase hiện tại. SQL bổ sung cột mới và giữ dữ liệu cũ. Sau đó mới deploy mã Node.js mới.
 
+Để nhận bài gửi công khai trên Blog, chạy thêm `supabase-public-blog.sql` trên project hiện có trước khi deploy. Nếu vừa chạy lại toàn bộ `supabase-setup.sql` thì đã có phần này. Kiểm tra một bài gửi thử ở `/admin/posts.php?kind=blog`: bài phải ở trạng thái nháp cho đến khi quản trị viên duyệt.
+
 ## Kiến trúc
 
 Render chạy toàn bộ website TypeScript/Node.js và kết nối Supabase. Vercel chỉ làm điểm vào công khai, chuyển tiếp đường dẫn sang Render bằng external rewrite. Dùng project Vercel có Root Directory là `vercel-proxy`; không chọn thư mục gốc của repository. Mật khẩu và Supabase secret key chỉ đặt ở Render, không đặt trên Vercel.

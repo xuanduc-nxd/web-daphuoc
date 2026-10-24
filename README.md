@@ -6,7 +6,7 @@ Website TypeScript/Node.js, CSS và JavaScript thuần. Giao diện nền sáng,
 
 Supabase PostgreSQL là nơi lưu nội dung khi đã cấu hình. Node.js truy cập Data API phía máy chủ; ảnh mới được lưu trong bucket công khai site-media.
 
-- posts: Hoạt động, Thông báo, Blog; nháp/xuất bản, album tối đa 20 ảnh cho Hoạt động, ghim và ngày hết hạn cho Thông báo.
+- posts: Hoạt động, Thông báo, Blog; nháp/xuất bản, album tối đa 20 ảnh cho Hoạt động, ghim và ngày hết hạn cho Thông báo. Khách có thể gửi cảm nghĩ/lời cảm ơn ở Blog mà không cần đăng nhập; bài vào danh sách nháp để quản trị duyệt trước khi công khai.
 - members: Ban điều hành, cố vấn và sinh viên. Trang Sinh viên công khai tên, trường, ngành học, định hướng, nhu cầu hỗ trợ và lĩnh vực chuyên môn do admin nhập.
 - sponsors, about_sections, settings: tri ân, giới thiệu, thông tin liên hệ và ảnh chính trang chủ.
 - admin_users: tài khoản quản trị website, mật khẩu băm bcrypt tương thích với bản PHP cũ, quyền admin/editor. Đây là tài khoản của website, không nằm trong Supabase Auth.
@@ -43,7 +43,7 @@ Các trang công khai dùng `public/CSS/site.css`, `public/JS/site.js` và `src/
 
 Danh sách hỗ trợ tìm không dấu, lọc, sắp xếp và phân trang trên các bản ghi đã tải. API Supabase được đọc theo từng trang để không bỏ sót danh sách vượt giới hạn trả về. Blog, Hoạt động và Thông báo đều được quản lý trong admin/posts.php. Bài viết hỗ trợ xem ảnh lớn; admin có xem trước, xác nhận xóa và cảnh báo chưa lưu.
 
-Ảnh Cloudinary cũ giữ nguyên URL và sử dụng biến thể responsive theo [tài liệu Cloudinary](https://cloudinary.com/documentation/image_optimization). Ảnh Supabase Free được phục vụ từ file gốc; nên chọn ảnh có dung lượng phù hợp. Nút gửi tâm tình chỉ hiện khi đã cấu hình email chính thức. Danh sách nhà tài trợ và các gói tài trợ đang được ẩn trong lúc Ban chủ nhiệm xác nhận nội dung; xem [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md).
+Ảnh Cloudinary cũ giữ nguyên URL và sử dụng biến thể responsive theo [tài liệu Cloudinary](https://cloudinary.com/documentation/image_optimization). Ảnh Supabase Free được phục vụ từ file gốc; nên chọn ảnh có dung lượng phù hợp. Biểu mẫu Blog chỉ nhận nội dung chữ, giới hạn 3 bài mỗi giờ cho mỗi tên trên cùng địa chỉ mạng và tối đa 30 bài mỗi giờ trên một địa chỉ mạng, và cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trên project Supabase đã có. Danh sách nhà tài trợ và các gói tài trợ đang được ẩn trong lúc Ban chủ nhiệm xác nhận nội dung; xem [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md).
 
 ## Kiểm tra
 

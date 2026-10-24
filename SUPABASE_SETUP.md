@@ -12,6 +12,8 @@ Mở SQL Editor → New query. Sao chép **toàn bộ** [supabase-setup.sql](sup
 
 Nếu project đã chạy website trước đây, chạy lại toàn bộ SQL này trước khi triển khai mã mới. Các lệnh `add column if not exists` bổ sung album ảnh, ghim/hết hạn thông báo, định hướng, nhu cầu hỗ trợ và lĩnh vực chuyên môn của sinh viên vào bảng hiện có mà không xóa bài hoặc hồ sơ.
 
+Để bật biểu mẫu gửi cảm nghĩ/lời cảm ơn trên Blog cho project đã có, chỉ cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trong SQL Editor. File tạo bảng giới hạn số lần gửi và hàm riêng cho máy chủ; bài khách gửi được lưu trong `posts` với trạng thái `draft`. Sau đó vào `/admin/posts.php?kind=blog` để xem và chọn “Hiện” hoặc mở bài để sửa trước khi xuất bản. Nếu chạy lại toàn bộ `supabase-setup.sql`, phần SQL này đã được bao gồm.
+
 Nếu trang tạo bài báo bảng `posts` thiếu cột `gallery`, `pinned` hoặc `expires_on`, có thể chạy riêng [supabase-posts-columns.sql](supabase-posts-columns.sql) trong SQL Editor. Đây là bản cập nhật tối thiểu cho bài viết hiện có; sau khi chạy, dùng `npm run check-supabase` để xác nhận cả ba cột đã tồn tại.
 
 Để cập nhật riêng hồ sơ sinh viên trên project hiện có, chạy [supabase-student-fields.sql](supabase-student-fields.sql) trong SQL Editor. Lệnh bổ sung các cột `direction`, `support_needs` và `expertise` còn thiếu, giữ nguyên hồ sơ hiện có. Sau đó chạy `npm run check-supabase` để xác nhận.
@@ -27,6 +29,7 @@ SQL tạo:
 | settings | Thông tin website, liên hệ và ảnh trang chủ |
 | admin_users | Tài khoản quản trị website |
 | admin_login_attempts | Giới hạn thử đăng nhập |
+| public_blog_submission_attempts | Giới hạn gửi Blog công khai |
 
 Bucket site-media công khai dùng cho ảnh trên website, tối đa 20 MB/file và chỉ nhận JPG, PNG, WebP, GIF. Nếu bucket đã tồn tại với giới hạn 5 MB, chạy lại toàn bộ supabase-setup.sql để cập nhật giới hạn. Trong Supabase Storage Settings, kiểm tra Global file size limit đạt ít nhất 20 MB. Không dùng bucket này cho hồ sơ hoặc giấy tờ riêng tư.
 

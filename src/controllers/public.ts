@@ -1,9 +1,13 @@
+import { InputError, RateLimitError, StorageError } from '../core/config.ts';
+import { type Form, value } from '../core/http.ts';
 import { collection, members, posts, publicPost, record, settings } from '../models/repository.ts';
+import { blogFormToken, submitPublicBlog } from '../services/public-blog.ts';
 import { renderPublicPage, type PublicPageModel } from '../views/public/pages.ts';
 
-export async function publicRoute(page: string, url: URL): Promise<{html:string,status:number}> {
+export async function publicRoute(page: string, url: URL, form?: Form, remoteAddress='unknown'): Promise<{html?:string,status?:number,location?:string}> {
   const site = await settings();
   const data: PublicPageModel = {};
+  let formStatus=200;
 
   switch (page) {
     case 'index.php':
@@ -18,6 +22,19 @@ export async function publicRoute(page: string, url: URL): Promise<{html:string,
       data.rows = await collection('notifications');
       break;
     case 'Blog.php':
+      if (form) {
+        data.blogValues={author:value(form,'author'),category:value(form,'category'),title:value(form,'title'),content:value(form,'content')};
+        try {
+          await submitPublicBlog(form,remoteAddress);
+          return {location:'Blog.php?submitted=1#chia-se'};
+        } catch (error) {
+          if (!(error instanceof InputError || error instanceof StorageError)) throw error;
+          data.blogError=error.message;
+          formStatus=error instanceof RateLimitError ? 429 : error instanceof StorageError ? 503 : 400;
+        }
+      }
+      data.blogSubmitted=url.searchParams.get('submitted')==='1';
+      data.blogForm=blogFormToken();
       data.rows = await posts('blog', true);
       break;
     case 'Students.php':
@@ -49,5 +66,6 @@ export async function publicRoute(page: string, url: URL): Promise<{html:string,
       return {html: '', status: 404};
   }
 
-  return renderPublicPage(page, site, data);
+  const result=renderPublicPage(page, site, data);
+  return {...result,status:formStatus===200?result.status:formStatus};
 }
