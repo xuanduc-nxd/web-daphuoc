@@ -3,6 +3,7 @@ import { createWriteStream, mkdirSync, readFileSync, writeFileSync, renameSync, 
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomBytes } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
 import Busboy from 'busboy';
 import { ROOT, InputError } from './config.ts';
@@ -101,5 +102,20 @@ export class Session {
   consumeFlash():SessionData['flash'] { const result=this.data.flash; delete this.data.flash; return result; }
 }
 
-export function sendHtml(res: ServerResponse, html: string, status = 200): void { res.writeHead(status,{'Content-Type':'text/html; charset=UTF-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}); res.end(html); }
+export function acceptsGzip(header: string | string[] | undefined): boolean {
+  const value=Array.isArray(header) ? header.join(',') : header || '';
+  return value.split(',').some(part => {
+    const [encoding,...parameters]=part.trim().split(';');
+    if (encoding.trim().toLowerCase()!=='gzip') return false;
+    const quality=parameters.map(item=>item.trim().match(/^q\s*=\s*([0-9.]+)$/i)).find(Boolean);
+    return !quality || Number(quality[1])>0;
+  });
+}
+export function sendHtml(req: IncomingMessage, res: ServerResponse, html: string, status = 200): void {
+  const raw=Buffer.from(html);
+  const gzip=raw.length>=1024 && acceptsGzip(req.headers['accept-encoding']);
+  const body=gzip ? gzipSync(raw,{level:5}) : raw;
+  res.writeHead(status,{'Content-Type':'text/html; charset=UTF-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Accept-Encoding','Content-Length':body.length,...(gzip?{'Content-Encoding':'gzip'}:{})});
+  res.end(req.method==='HEAD'?undefined:body);
+}
 export function redirect(res: ServerResponse, location: string): void { res.writeHead(302,{Location:location,'Cache-Control':'no-store'}); res.end(); }

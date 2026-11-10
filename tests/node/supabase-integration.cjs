@@ -192,6 +192,15 @@ const freePort = async () => {
       try { await fetch(base + "/admin/login.php"); break; }
       catch (error) { if (attempt > 30) throw error; await new Promise(resolve => setTimeout(resolve,100)); }
     }
+    const cssResponse = await fetch(base + "/CSS/site.css",{headers:{"Accept-Encoding":"gzip"}});
+    assert.equal(cssResponse.headers.get("content-encoding"),"gzip","CSS is compressed in transit");
+    assert(Number(cssResponse.headers.get("content-length")) < fs.statSync(path.join(root,"public/CSS/site.css")).size/2,"Compressed CSS is smaller than the original");
+    const cssEtag = cssResponse.headers.get("etag");
+    assert(cssEtag && (await cssResponse.text()).includes(".student-card"));
+    assert.equal((await fetch(base + "/CSS/site.css",{headers:{"Accept-Encoding":"gzip","If-None-Match":cssEtag}})).status,304,"Unchanged CSS returns 304");
+    const htmlResponse = await fetch(base + "/Students.php",{headers:{"Accept-Encoding":"gzip"}});
+    assert.equal(htmlResponse.headers.get("content-encoding"),"gzip","Public HTML is compressed in transit");
+    assert((await htmlResponse.text()).includes("Hỗ trợ sinh viên"));
     let cookie = "";
     const request = async (route, form = null) => {
       const response = await fetch(base + route, {
@@ -409,10 +418,13 @@ const freePort = async () => {
     const studentId = (await db.query("select id from members where name=$1",[studentForm.name])).rows[0].id;
     await db.query("update members set image=$1,detail=$2 where id=$3",["https://example.com/private-photo.jpg","Ghi chú riêng không công khai",studentId]);
     const studentsHtml = (await request("/Students.php")).html;
-    for (const value of [studentForm.name,studentForm.school,studentForm.major,studentForm.direction,studentForm.support_needs,studentForm.expertise]) assert(studentsHtml.includes(value));
+    assert(studentsHtml.includes('Hỗ trợ sinh viên'),"Public student page has support heading");
+    for (const value of [studentForm.name,studentForm.direction]) assert(studentsHtml.includes(value),"Public page includes the approved student fields");
+    for (const value of [studentForm.school,studentForm.major,studentForm.support_needs,studentForm.expertise,"private-photo.jpg","Ghi chú riêng"]) assert(!studentsHtml.includes(value),"Public page hides private student fields and photo");
+    const publicStudentCard = /<article class="student-card">[\s\S]*?<\/article>/.exec(studentsHtml);
+    assert(publicStudentCard && !publicStudentCard[0].includes('<img'),"Student card exists and contains no image");
     const studentListHtml = (await request("/admin/team.php?type=student")).html;
-    assert(studentListHtml.includes(studentForm.support_needs) && studentListHtml.includes(studentForm.expertise),"Student admin list includes new fields");
-    assert(!studentsHtml.includes("private-photo.jpg") && !studentsHtml.includes("Ghi chú riêng"),"Student public page exposes only approved fields");
+    for (const value of [studentForm.school,studentForm.major,studentForm.support_needs,studentForm.expertise]) assert(studentListHtml.includes(value),"Student admin list includes private fields");
     const sponsorPage = await request("/admin/content-edit.php?type=sponsor");
     const sponsorForm = {id:"",version:"1",token:field(sponsorPage.html,"token"),title:"Tài trợ kiểm thử",excerpt:"Đóng góp kiểm thử",content:"Nội dung",date:"14/10/2026",sort_order:"99"};
     assert.equal((await request("/admin/content-edit.php?type=sponsor",sponsorForm)).status,302);

@@ -7,7 +7,7 @@ Website TypeScript/Node.js, CSS và JavaScript thuần. Giao diện nền sáng,
 Supabase PostgreSQL là nơi lưu nội dung khi đã cấu hình. Node.js truy cập Data API phía máy chủ; ảnh mới được lưu trong bucket công khai site-media.
 
 - posts: Hoạt động, Thông báo, Blog; nháp/xuất bản, album tối đa 20 ảnh cho Hoạt động, ghim và ngày hết hạn cho Thông báo. Khách có thể gửi cảm nghĩ/lời cảm ơn ở Blog mà không cần đăng nhập; bài vào danh sách nháp để quản trị duyệt trước khi công khai.
-- members: Ban điều hành, cố vấn và sinh viên. Trang Sinh viên công khai tên, trường, ngành học, định hướng, nhu cầu hỗ trợ và lĩnh vực chuyên môn do admin nhập.
+- members: Ban điều hành, cố vấn và sinh viên. Trang Hỗ trợ sinh viên chỉ công khai tên và định hướng của sinh viên, không hiển thị ảnh. Trường, ngành học, nhu cầu hỗ trợ và lĩnh vực chuyên môn chỉ hiển thị trong admin.
 - sponsors, about_sections, settings: tri ân, giới thiệu, thông tin liên hệ và ảnh chính trang chủ.
 - admin_users: tài khoản quản trị website, mật khẩu băm bcrypt tương thích với bản PHP cũ, quyền admin/editor. Đây là tài khoản của website, không nằm trong Supabase Auth.
 - Các thao tác cập nhật/xóa kiểm tra version để tránh ghi đè thay đổi của người khác.

@@ -1,71 +1,61 @@
-import { InputError, RateLimitError, StorageError } from '../core/config.ts';
-import { type Form, value } from '../core/http.ts';
-import { collection, members, posts, publicPost, record, settings } from '../models/repository.ts';
-import { blogFormToken, submitPublicBlog } from '../services/public-blog.ts';
-import { renderPublicPage, type PublicPageModel } from '../views/public/pages.ts';
+import { type Form } from '../core/http.ts';
+import { type PublicPageModel, type RouteResult } from '../models/types.ts';
+import { settings } from '../models/setting.model.ts';
+import { renderPublicPage } from '../views/public/pages.ts';
+import { loadHomePageData } from './public/home.controller.ts';
+import { loadAboutPageData } from './public/about.controller.ts';
+import { loadExecutiveBoardPageData } from './public/executive-board.controller.ts';
+import { loadActivitiesPageData } from './public/activities.controller.ts';
+import { loadNotificationsPageData } from './public/notifications.controller.ts';
+import { handleBlogSubmission, loadBlogPageData } from './public/blog.controller.ts';
+import { loadStudentsPageData } from './public/students.controller.ts';
+import { loadHonorListPageData } from './public/honor-list.controller.ts';
+import { loadDetailPageData } from './public/detail.controller.ts';
 
-export async function publicRoute(page: string, url: URL, form?: Form, remoteAddress='unknown'): Promise<{html?:string,status?:number,location?:string}> {
-  const site = await settings();
+export async function publicRoute(
+  page: string,
+  url: URL,
+  form?: Form,
+  remoteAddress = 'unknown',
+): Promise<RouteResult> {
   const data: PublicPageModel = {};
-  let formStatus=200;
+  let formStatus = 200;
 
-  switch (page) {
-    case 'index.php':
-      [data.activities, data.notifications, data.sponsors] = await Promise.all([
-        collection('activities'), collection('notifications'), collection('sponsors'),
-      ]);
-      break;
-    case 'Activities.php':
-      data.rows = await collection('activities');
-      break;
-    case 'Notifications.php':
-      data.rows = await collection('notifications');
-      break;
-    case 'Blog.php':
-      if (form) {
-        data.blogValues={author:value(form,'author'),category:value(form,'category'),title:value(form,'title'),content:value(form,'content')};
-        try {
-          await submitPublicBlog(form,remoteAddress);
-          return {location:'Blog.php?submitted=1#chia-se'};
-        } catch (error) {
-          if (!(error instanceof InputError || error instanceof StorageError)) throw error;
-          data.blogError=error.message;
-          formStatus=error instanceof RateLimitError ? 429 : error instanceof StorageError ? 503 : 400;
-        }
-      }
-      data.blogSubmitted=url.searchParams.get('submitted')==='1';
-      data.blogForm=blogFormToken();
-      data.rows = await posts('blog', true);
-      break;
-    case 'Students.php':
-      data.rows = await members('student');
-      break;
-    case 'ExecutiveBoard.php':
-      data.rows = await members('board');
-      break;
-    case 'About.php':
-      data.rows = await collection('abouts');
-      break;
-    case 'HonorList.php':
-      data.rows = await collection('sponsors');
-      break;
-    case 'detail.php':
-    case 'detail_blog.php': {
-      const id = url.searchParams.get('id')?.trim() || '';
-      const type = page === 'detail_blog.php' ? 'blog' : (url.searchParams.get('type') || 'notifications');
-      data.kind = type === 'activities' ? 'activity' : type === 'sponsors' ? 'sponsor' : type === 'blog' ? 'blog' : 'notification';
-      const article = id ? (data.kind === 'sponsor' ? await record('sponsors', id) : await publicPost(data.kind, id)) : null;
-      const rows = data.kind === 'sponsor' ? await collection('sponsors') : await posts(data.kind, true);
-      data.article = article;
-      data.recent = rows.filter(item => item.id !== article?.id).slice(0, 4);
-      break;
-    }
-    case 'contact.php':
-      break;
-    default:
-      return {html: '', status: 404};
+  if (page === 'Blog.php' && form) {
+    const submission = await handleBlogSubmission(form, remoteAddress, data);
+    if (submission.redirectResult) return submission.redirectResult;
+    formStatus = submission.formStatus;
   }
 
-  const result=renderPublicPage(page, site, data);
-  return {...result,status:formStatus===200?result.status:formStatus};
+  const loadPageData = async (): Promise<void> => {
+    switch (page) {
+      case 'index.php':
+        return loadHomePageData(data);
+      case 'Activities.php':
+        return loadActivitiesPageData(data);
+      case 'Notifications.php':
+        return loadNotificationsPageData(data);
+      case 'Blog.php':
+        return loadBlogPageData(url, data);
+      case 'Students.php':
+        return loadStudentsPageData(data);
+      case 'ExecutiveBoard.php':
+        return loadExecutiveBoardPageData(data);
+      case 'About.php':
+        return loadAboutPageData(data);
+      case 'HonorList.php':
+        return loadHonorListPageData(data);
+      case 'detail.php':
+      case 'detail_blog.php':
+        return loadDetailPageData(page, url, data);
+      case 'contact.php':
+        return;
+      default:
+        return;
+    }
+  };
+
+  const [site] = await Promise.all([settings(), loadPageData()]);
+  const result = renderPublicPage(page, site, data);
+  return { ...result, status: formStatus === 200 ? result.status : formStatus };
 }
