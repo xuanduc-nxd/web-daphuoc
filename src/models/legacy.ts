@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { ROOT, StorageError, dateValue, imageValue, type Row, type Table } from '../core/config.ts';
 
 export function defaultSettings(): Row {
-  return { id: 'main', site_name: 'CLB Golf Đa Phước', notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg' };
+  return { id: 'main', site_name: 'CLB Golf Đa Phước', notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg', current_board_label: '' };
 }
 function read(root: string, file: string): any {
   try { return JSON.parse(readFileSync(resolve(root, file), 'utf8')); }
@@ -32,7 +32,7 @@ export function legacyDatasets(root = process.env.APP_PREVIEW_DATA_DIR || resolv
   if (!Array.isArray(team)) throw new StorageError('File team.json không phải danh sách.');
   team.forEach((member: Row, index: number) => {
     if (!member?.id || !member?.name) throw new StorageError('Hồ sơ nguồn thiếu id hoặc họ tên.');
-    datasets.members.push({ id: String(member.id), type: member.type === 'student' ? 'student' : 'board', name: String(member.name), position: String(member.position || ''), school: String(member.school || ''), major: String(member.major || ''), detail: String(member.detail || ''), direction: String(member.direction || ''), support_needs: String(member.support_needs || ''), expertise: String(member.expertise || ''), image: imageValue(member.image || ''), sort_order: index });
+    datasets.members.push({ id: String(member.id), type: member.type === 'student' ? 'student' : 'board', name: String(member.name), position: String(member.position || ''), role_title: String(member.role_title || ''), board_term: String(member.board_term || (member.position === 'Ban điều hành' ? 'current' : '')), term_order: Number(member.term_order || 0), school: String(member.school || ''), major: String(member.major || ''), detail: String(member.detail || ''), direction: String(member.direction || ''), support_needs: String(member.support_needs || ''), expertise: String(member.expertise || ''), image: imageValue(member.image || ''), sort_order: index });
   });
   for (const [file, table] of [['sheets/sponsors.json','sponsors'],['sheets/abouts.json','about_sections']] as const) {
     const list = read(root,file);

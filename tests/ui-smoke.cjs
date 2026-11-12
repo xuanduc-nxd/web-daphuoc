@@ -62,6 +62,16 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
     if (process.env.UI_SKIP_LAYOUT !== "1")
       console.log("Public pages: desktop, tablet, 375px and 320px passed");
     await page.setViewportSize({width:1440,height:900});
+    await page.goto(base + "/", {waitUntil:"networkidle"});
+    await page.locator('[aria-controls="programs-submenu"]').click();
+    assert(await page.locator("#programs-submenu").isVisible());
+    await page.locator('[aria-controls="news-submenu"]').click();
+    assert(await page.locator("#news-submenu").isVisible());
+    assert(!(await page.locator("#programs-submenu").isVisible()));
+    await page.keyboard.press("Escape");
+    assert(!(await page.locator("#news-submenu").isVisible()));
+    console.log("Desktop dropdown navigation passed");
+    await page.setViewportSize({width:1440,height:900});
     await page.goto(base + "/Blog.php", {waitUntil:"networkidle"});
     const blogForm=page.locator(".blog-share-form");
     assert(await blogForm.isVisible(),"Anonymous Blog form visible on desktop");
@@ -88,8 +98,11 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
         .first()
         .evaluate((el) => el === document.activeElement),
     );
-    await page.locator(".submenu-toggle").click();
+    await page.locator('[aria-controls="about-submenu"]').click();
     assert(await page.locator("#about-submenu").isVisible());
+    await page.locator('[aria-controls="programs-submenu"]').click();
+    assert(await page.locator("#programs-submenu").isVisible());
+    assert(!(await page.locator("#about-submenu").isVisible()));
     await page.keyboard.press("Escape");
     assert.equal(
       await page.locator("#menuToggle").getAttribute("aria-expanded"),

@@ -33,6 +33,9 @@ create table if not exists public.members (
     type text not null check (type in ('board', 'student')),
     name text not null check (length(trim(name)) between 1 and 200),
     position text not null default '',
+    role_title text not null default '',
+    board_term text not null default '',
+    term_order integer not null default 0,
     school text not null default '',
     major text not null default '',
     detail text not null default '',
@@ -48,6 +51,9 @@ create table if not exists public.members (
 alter table public.members add column if not exists direction text not null default '';
 alter table public.members add column if not exists support_needs text not null default '';
 alter table public.members add column if not exists expertise text not null default '';
+alter table public.members add column if not exists board_term text not null default '';
+alter table public.members add column if not exists term_order integer not null default 0;
+alter table public.members add column if not exists role_title text not null default '';
 create index if not exists members_listing on public.members (type, sort_order, id);
 
 create table if not exists public.sponsors (
@@ -87,10 +93,12 @@ create table if not exists public.settings (
     tiktok text not null default '',
     threads text not null default '',
     hero_image text not null default '',
+    current_board_label text not null default '',
     version integer not null default 1,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
+alter table public.settings add column if not exists current_board_label text not null default '';
 
 -- PHP handles password verification and server sessions.
 -- This table is private; it does not duplicate Supabase Auth users.

@@ -5,24 +5,6 @@ export function renderPublicFooter(settings: Row): string {
   const phoneClean = String(settings.phone || '').replace(/[^0-9+]/g, '');
 
   return `<footer class="site-footer">
-    <div class="footer-cta-strip">
-    </div>
-    <div class="footer-stats-strip">
-      <div class="container footer-stats-inner">
-        <div class="footer-stat-item">
-          <div class="footer-stat-num">100%</div>
-          <div class="footer-stat-label">Minh bạch nguồn quỹ hỗ trợ</div>
-        </div>
-        <div class="footer-stat-item">
-          <div class="footer-stat-num">Đà Nẵng</div>
-          <div class="footer-stat-label">Tâm điểm kết nối &amp; sẻ chia</div>
-        </div>
-        <div class="footer-stat-item">
-          <div class="footer-stat-num">Bền vững</div>
-          <div class="footer-stat-label">Đồng hành suốt chặng đường đại học</div>
-        </div>
-      </div>
-    </div>
     <div class="container footer-main">
       <div class="footer-brand">
         <a class="brand" href="index.php">

@@ -44,6 +44,9 @@ export async function handleTeamEdit(
         type,
         name: '',
         position: 'Ban điều hành',
+        role_title: '',
+        board_term: '',
+        term_order: 0,
         school: '',
         major: '',
         detail: '',
@@ -66,7 +69,12 @@ export async function handleTeamEdit(
     row.version = integer(form, 'version');
     if (type === 'board') {
       row.detail = scalar(form, 'detail');
+      row.role_title = scalar(form, 'role_title');
       row.position = value(form, 'position') === 'Ban cố vấn' ? 'Ban cố vấn' : 'Ban điều hành';
+      const termKind = value(form, 'term_kind');
+      row.board_term = row.position === 'Ban cố vấn' ? '' : termKind === 'current' ? 'current' : termKind === 'previous' ? scalar(form, 'board_term') : '';
+      row.term_order = row.position === 'Ban cố vấn' || termKind !== 'previous' ? 0 : integer(form, 'term_order');
+      if (value(form, 'sort_order').trim()) row.sort_order = integer(form, 'sort_order');
     } else {
       for (const field of ['school', 'major', 'direction', 'support_needs', 'expertise']) {
         row[field] = scalar(form, field);
@@ -91,6 +99,15 @@ export async function handleTeamEdit(
           throw new InputError('Thông tin sinh viên quá dài.');
         }
       } else {
+        if (row.board_term !== 'current' && [...row.board_term].length > 100) {
+          throw new InputError('Tên khóa không hợp lệ hoặc quá dài.');
+        }
+        if (row.position === 'Ban điều hành' && value(form, 'term_kind') === 'previous' && (!row.board_term || row.term_order < 1 || row.term_order > 9999)) {
+          throw new InputError('Nhập tên khóa cũ và năm bắt đầu hợp lệ.');
+        }
+        if ([...row.detail].length > 3000) throw new InputError('Giới thiệu quá dài.');
+        if ([...row.role_title].length > 120) throw new InputError('Chức danh quá dài.');
+        if (!Number.isInteger(row.sort_order) || row.sort_order < 0 || row.sort_order > 9999) throw new InputError('Thứ tự hiển thị không hợp lệ.');
         const uploaded = await uploadedImage(form, 'team');
         if (uploaded) row.image = uploaded;
         else if (checked(form, 'remove_image')) row.image = '';
@@ -101,6 +118,9 @@ export async function handleTeamEdit(
         'type',
         'name',
         'position',
+        'role_title',
+        'board_term',
+        'term_order',
         'school',
         'major',
         'detail',
@@ -114,9 +134,11 @@ export async function handleTeamEdit(
 
       if (!existing) {
         const all = await members();
-        payload.sort_order = all.length
-          ? Math.max(...all.map(item => Number(item.sort_order || 0))) + 1
-          : 0;
+        if (!value(form, 'sort_order').trim()) {
+          payload.sort_order = all.length
+            ? Math.max(...all.map(item => Number(item.sort_order || 0))) + 1
+            : 0;
+        }
       }
 
       await save('members', payload, existing ? row.version : undefined);

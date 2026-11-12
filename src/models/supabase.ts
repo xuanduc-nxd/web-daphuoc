@@ -35,6 +35,12 @@ export async function supabaseJson(method: string, path: string, data?: Row | Ro
       if (typeof error.message === 'string') message = error.message;
     } catch {}
     console.error(`Supabase request failed: HTTP ${response.status}${/^[A-Z0-9]{1,20}$/.test(code) ? `, code ${code}` : ''}`);
+    if (path.startsWith('/rest/v1/members') && ['42703','PGRST204'].includes(code) && /\b(board_term|term_order|role_title)\b/i.test(message)) {
+      throw new StorageError('Bảng members thiếu cột nhiệm kỳ. Chạy file supabase-board-terms.sql trong Supabase SQL Editor.');
+    }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\bcurrent_board_label\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu tên khóa hiện tại. Chạy file supabase-board-terms.sql trong Supabase SQL Editor.');
+    }
     if (path.startsWith('/rest/v1/members') && ['42703','PGRST204'].includes(code) && /\b(direction|support_needs|expertise)\b/i.test(message)) {
       throw new StorageError('Bảng members thiếu cột hồ sơ sinh viên. Chạy file supabase-student-fields.sql trong Supabase SQL Editor.');
     }

@@ -33,6 +33,7 @@ export async function handleSettings(
       'tiktok',
       'threads',
       'hero_image',
+      'current_board_label',
     ]) {
       site[field] = scalar(form, field);
     }
@@ -41,6 +42,7 @@ export async function handleSettings(
       if (!site.site_name || [...site.site_name].length > 80) {
         throw new InputError('Tên website cần từ 1 đến 80 ký tự.');
       }
+      if ([...site.current_board_label].length > 100) throw new InputError('Tên khóa hiện tại quá dài.');
       if (site.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(site.email)) {
         throw new InputError('Email không hợp lệ.');
       }
@@ -72,6 +74,7 @@ export async function handleSettings(
           'tiktok',
           'threads',
           'hero_image',
+          'current_board_label',
         ]),
         site.version,
       );

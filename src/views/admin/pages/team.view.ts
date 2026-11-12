@@ -58,10 +58,10 @@ export function teamView(rows: Row[], type: string, session: Session): string {
             rows.length
               ? rows
                   .map(
-                    row => `<tr data-filter-item data-search="${e(`${row.name || ''} ${row.school || ''} ${row.major || ''} ${row.direction || ''} ${row.support_needs || ''} ${row.expertise || ''} ${row.position || ''}`)}" data-category="${e(row.position || '')}" data-date="0">
+                    row => `<tr data-filter-item data-search="${e(`${row.name || ''} ${row.school || ''} ${row.major || ''} ${row.direction || ''} ${row.support_needs || ''} ${row.expertise || ''} ${row.position || ''} ${row.board_term || ''} ${row.role_title || ''}`)}" data-category="${e(row.position || '')}" data-date="0">
                       <td>${student ? e(String(row.direction || '').slice(0, 90)) : row.image ? `<img class="team-thumb" src="${e(adminImage(row.image))}" alt="Ảnh ${e(row.name)}">` : `<span class="team-thumb-placeholder">${e(String(row.name || '').slice(0, 1))}</span>`}</td>
-                      <td><strong>${e(row.name)}</strong>${student ? '' : `<small>${e(row.detail)}</small>`}</td>
-                      <td>${e(student ? `${row.school || ''} · ${row.major || ''}` : row.position)}</td>
+                      <td><strong>${e(row.name)}</strong>${student ? '' : `<small>${e(row.role_title || row.detail)}</small>`}</td>
+                      <td>${e(student ? `${row.school || ''} · ${row.major || ''}` : `${row.position}${row.position === 'Ban cố vấn' ? '' : ` · ${row.board_term === 'current' ? 'Khóa hiện tại' : row.board_term || 'Chưa phân khóa'}`}`)}</td>
                       ${student ? `<td>${e(String(row.support_needs || '').slice(0, 100))}</td><td>${e(String(row.expertise || '').slice(0, 100))}</td>` : ''}
                       <td class="actions">
                         <a href="team-edit.php?id=${encodeURIComponent(row.id)}">${icon('pencil-simple')} Sửa</a>
@@ -130,7 +130,28 @@ export function teamEditView(
               <option value="Ban cố vấn" ${selected(row.position, 'Ban cố vấn')}>Ban cố vấn</option>
             </select>
           </label>
+          <div class="form-grid">
+            <label>Chức danh trong CLB<input name="role_title" value="${e(row.role_title || '')}" maxlength="120" placeholder="Ví dụ: Trưởng ban, Phó ban"></label>
+            <label>Thứ tự hiển thị<input name="sort_order" type="number" min="0" max="9999" value="${row.sort_order || 0}"><small>Số nhỏ hơn xuất hiện trước trong cùng nhóm.</small></label>
+          </div>
           <label>Thông tin giới thiệu<textarea name="detail" rows="5" placeholder="Giới thiệu ngắn về hồ sơ">${e(row.detail)}</textarea></label>
+          <div class="form-grid">
+            <label>Phân khóa Ban điều hành
+              <select name="term_kind">
+                <option value="unassigned" ${selected(row.board_term ? '' : 'unassigned', 'unassigned')}>Chưa xác định</option>
+                <option value="current" ${selected(row.board_term === 'current' ? 'current' : '', 'current')}>Khóa hiện tại</option>
+                <option value="previous" ${selected(row.board_term && row.board_term !== 'current' ? 'previous' : '', 'previous')}>Khóa cũ</option>
+              </select>
+              <small>Chỉ áp dụng cho Ban điều hành; Ban cố vấn không cần chọn khóa.</small>
+            </label>
+            <label>Tên khóa cũ
+              <input name="board_term" value="${e(row.board_term && row.board_term !== 'current' ? row.board_term : '')}" maxlength="100" placeholder="Ví dụ: Khóa I (2022–2024)">
+            </label>
+            <label>Năm bắt đầu khóa cũ
+              <input name="term_order" type="number" min="1" max="9999" value="${row.term_order || ''}" placeholder="Ví dụ: 2022">
+              <small>Dùng để xếp các khóa cũ từ mới đến cũ.</small>
+            </label>
+          </div>
           <label>Ảnh đại diện
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input>
             <small>JPG, PNG, WebP hoặc GIF; tối đa 20 MB.</small>

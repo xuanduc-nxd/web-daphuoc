@@ -70,7 +70,7 @@ export function renderPublicPage(
     case 'ExecutiveBoard.php': {
       const rows = data.rows || [];
       title = 'Ban điều hành Quỹ · CLB Golf Đa Phước';
-      body = renderExecutiveBoardPage(rows);
+      body = renderExecutiveBoardPage(rows, site.current_board_label);
       break;
     }
     case 'About.php': {

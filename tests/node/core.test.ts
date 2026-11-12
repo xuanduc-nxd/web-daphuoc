@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { legacyDatasets } from '../../src/models/legacy.ts';
 import { dateValue, imageValue } from '../../src/core/config.ts';
 import { e, richText, srcset } from '../../src/views/public/components.ts';
+import { renderExecutiveBoardPage } from '../../src/views/public/pages/executive-board.view.ts';
 
 test('legacy content is normalized without publishing the archive', () => {
   const data=legacyDatasets();
@@ -23,4 +24,18 @@ test('public HTML escapes input and restricts rich links', () => {
   assert(html.includes('<strong>đậm</strong>'));
   assert.throws(()=>imageValue('../secret'));
   assert(srcset('Image/act-1.jpg').includes('activity-480.webp'));
+});
+
+test('board page orders advisors, current board and previous terms', () => {
+  const html = renderExecutiveBoardPage([
+    { name: 'Khóa cũ A', position: 'Ban điều hành', board_term: 'Khóa I', term_order: 2020 },
+    { name: 'Khóa hiện tại', position: 'Ban điều hành', board_term: 'current' },
+    { name: 'Cố vấn', position: 'Ban cố vấn' },
+    { name: 'Khóa cũ B', position: 'Ban điều hành', board_term: 'Khóa II', term_order: 2022 },
+  ], 'Khóa 2026–2027');
+  const names = ['Cố vấn', 'Khóa hiện tại', 'Khóa cũ B', 'Khóa cũ A'];
+  assert(names.every((name, index) => index === 0 || html.indexOf(names[index - 1]) < html.indexOf(name)));
+  assert(html.includes('Ban điều hành các khóa trước'));
+  assert(html.includes('Khóa 2026–2027'));
+  assert(html.includes('<details class="team-term-panel"'));
 });

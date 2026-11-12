@@ -16,6 +16,7 @@ export function settingsView(site: Row, error: string, session: Session): string
     ${csrf(session.token())}
     ${hidden('version', site.version)}
     <label>Tên website<input name="site_name" maxlength="80" required value="${e(site.site_name)}"></label>
+    <label>Tên khóa Ban điều hành hiện tại<input name="current_board_label" maxlength="100" value="${e(site.current_board_label || '')}" placeholder="Ví dụ: Khóa 2026–2027"><small>Để trống nếu chưa xác nhận tên hoặc thời gian của khóa.</small></label>
     <label>Thông điệp của CLB<textarea name="notice" rows="2">${e(site.notice)}</textarea></label>
     <label>Thông tin liên hệ bổ sung<textarea name="contact" rows="3">${e(site.contact)}</textarea></label>
     <div class="form-grid">

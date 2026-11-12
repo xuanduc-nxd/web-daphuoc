@@ -2,6 +2,8 @@
 
 Chuẩn bị project và dữ liệu theo [SUPABASE_SETUP.md](SUPABASE_SETUP.md) trước khi công bố.
 
+Trước khi triển khai trang Ban điều hành theo khóa, chạy `supabase-board-terms.sql` trên project Supabase hiện có. Script thêm trường nhiệm kỳ, chức danh, tên khóa hiện tại và xếp ba hồ sơ đã được xác nhận vào khóa hiện tại. Sau đó quản trị viên có thể nhập chức danh, thứ tự hiển thị và tên khóa trong admin.
+
 Trước khi triển khai phiên bản có album Hoạt động, ghim/hết hạn Thông báo và các trường hồ sơ Sinh viên mới, chạy lại toàn bộ `supabase-setup.sql` hoặc riêng `supabase-student-fields.sql` trên project Supabase hiện tại. SQL bổ sung cột mới và giữ dữ liệu cũ. Sau đó mới deploy mã Node.js mới.
 
 Để nhận bài gửi công khai trên Blog, chạy thêm `supabase-public-blog.sql` trên project hiện có trước khi deploy. Nếu vừa chạy lại toàn bộ `supabase-setup.sql` thì đã có phần này. Kiểm tra một bài gửi thử ở `/admin/posts.php?kind=blog`: bài phải ở trạng thái nháp cho đến khi quản trị viên duyệt.

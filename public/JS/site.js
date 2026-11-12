@@ -22,8 +22,17 @@
   const toggle = document.getElementById("menuToggle");
   const backdrop = document.querySelector("[data-menu-backdrop]");
   const mobile = window.matchMedia("(max-width: 1099px)");
+  const closeSubmenus = (except = null) => {
+    document.querySelectorAll(".submenu-toggle").forEach((button) => {
+      if (button === except) return;
+      button.setAttribute("aria-expanded", "false");
+      const submenu = document.getElementById(button.getAttribute("aria-controls"));
+      if (submenu) submenu.hidden = true;
+    });
+  };
   const setMenu = (open) => {
     if (!menu || !toggle) return;
+    if (!open) closeSubmenus();
     menu.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     toggle.setAttribute("aria-label", open ? "Đóng menu" : "Mở menu");
@@ -45,7 +54,10 @@
       const submenu = document.getElementById(
         button.getAttribute("aria-controls"),
       );
+      // Pointer hover may have opened the desktop menu before the click lands.
+      if (!mobile.matches && button.getAttribute("aria-expanded") === "true") return;
       const open = button.getAttribute("aria-expanded") !== "true";
+      if (open) closeSubmenus(button);
       button.setAttribute("aria-expanded", String(open));
       if (submenu) submenu.hidden = !open;
     });
@@ -55,6 +67,7 @@
     const submenu = item.querySelector(".nav-submenu");
     item.addEventListener("pointerenter", () => {
       if (!mobile.matches) {
+        closeSubmenus(button);
         submenu.hidden = false;
         button.setAttribute("aria-expanded", "true");
       }
@@ -66,6 +79,9 @@
       }
     });
     item.addEventListener("focusout", (event) => {
+      // Collapsing an in-flow mobile submenu during pointerdown moves the next
+      // button before click, so mobile menus close through click/Escape instead.
+      if (mobile.matches) return;
       if (!item.contains(event.relatedTarget)) {
         submenu.hidden = true;
         button.setAttribute("aria-expanded", "false");
@@ -74,13 +90,7 @@
   });
   document.addEventListener("click", (event) => {
     if (!event.target.closest(".has-submenu")) {
-      document.querySelectorAll(".submenu-toggle").forEach((button) => {
-        button.setAttribute("aria-expanded", "false");
-        const submenu = document.getElementById(
-          button.getAttribute("aria-controls"),
-        );
-        if (submenu) submenu.hidden = true;
-      });
+      closeSubmenus();
     }
   });
   document.addEventListener("keydown", (event) => {
