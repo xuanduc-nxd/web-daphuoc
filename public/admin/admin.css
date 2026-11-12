@@ -754,6 +754,9 @@ td small {
 .login-intro .brand {
   align-self: flex-start;
 }
+.login-intro .brand strong {
+  color: var(--ink);
+}
 .login-intro h2 {
   font-size: 36px;
   letter-spacing: -1px;
@@ -929,6 +932,72 @@ td small {
   }
   .table-wrap {
     padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+  .table-wrap table,
+  .student-table table,
+  .table-wrap tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .table-wrap thead {
+    display: none;
+  }
+  .table-wrap tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .table-wrap tbody tr[data-filter-item] {
+    display: block;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  .table-wrap td[data-label] {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    padding: 7px 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .table-wrap td[data-label]::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .table-wrap td[data-label] strong,
+  .table-wrap td[data-label] small {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+  }
+  .table-wrap td.actions {
+    display: block;
+    padding-top: 10px;
+    margin-top: 5px;
+    border-top: 1px solid var(--line);
+  }
+  .table-wrap td.actions::before {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .table-wrap td.actions a,
+  .table-wrap td.actions button {
+    min-height: 40px;
+  }
+  .table-wrap .table-empty {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
   }
   .info-grid,
   .form-grid,

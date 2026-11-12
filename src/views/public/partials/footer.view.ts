@@ -40,28 +40,22 @@ export function renderPublicFooter(settings: Row): string {
         </div>
       </div>
       <div class="footer-navigation">
-        <h2>Về chúng tôi</h2>
+        <h2>Về CLB</h2>
         <a href="About.php">Tổng quan CLB</a>
         <a href="ExecutiveBoard.php">Ban điều hành</a>
-        <a href="HonorList.php">Nhà tài trợ</a>
-      </div>
-      <div class="footer-navigation">
-        <h2>Chương trình &amp; Dự án</h2>
         <a href="Students.php">Hỗ trợ sinh viên</a>
-        <a href="About.php">Điều kiện &amp; Tôn chỉ</a>
-        <a href="Blog.php#chia-se">Gửi tâm tình</a>
       </div>
       <div class="footer-navigation">
-        <h2>Hoạt động</h2>
+        <h2>Tin tức</h2>
         <a href="Notifications.php">Thông báo từ BĐH</a>
         <a href="Activities.php">Tin tức &amp; Sự kiện</a>
         <a href="Blog.php">We're Shining · Blog</a>
       </div>
-      <div class="footer-contact">
-        <h2>Đồng hành</h2>
-        <a href="HonorList.php">Vì sao đồng hành</a>
-        <a href="contact.php">Ủng hộ ngay</a>
-        <a class="text-link" href="contact.php">Thông tin liên hệ ${icon('arrow-up-right')}</a>
+      <div class="footer-navigation">
+        <h2>Kết nối</h2>
+        <a href="HonorList.php">Tri ân &amp; tài trợ</a>
+        <a href="Blog.php#chia-se">Gửi tâm tình</a>
+        <a href="contact.php">Liên hệ CLB ${icon('arrow-up-right')}</a>
       </div>
     </div>
     <div class="footer-bottom">

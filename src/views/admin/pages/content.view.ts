@@ -46,10 +46,10 @@ export function contentView(rows: Row[], type: string, session: Session): string
                   .map(row => {
                     const label = about ? strip(row.content) : String(row.title || '');
                     return `<tr data-filter-item data-search="${e(`${label} ${row.category || ''} ${row.excerpt || ''}`)}" data-date="${-Number(row.sort_order || 0)}">
-                      <td><strong>${e(label.slice(0, 150))}</strong></td>
-                      <td>${e(about ? `${aboutSectionLabels[row.section_key] || ''}${row.category ? ' · ' + row.category : ''}` : row.excerpt)}</td>
-                      <td>${Number(row.sort_order || 0)}</td>
-                      <td class="actions">
+                      <td data-label="Nội dung"><strong>${e(label.slice(0, 150))}</strong></td>
+                      <td data-label="${about ? 'Mục' : 'Đóng góp'}">${e(about ? `${aboutSectionLabels[row.section_key] || ''}${row.category ? ' · ' + row.category : ''}` : row.excerpt)}</td>
+                      <td data-label="Thứ tự">${Number(row.sort_order || 0)}</td>
+                      <td class="actions" data-label="Thao tác">
                         <a href="content-edit.php?type=${type}&amp;id=${encodeURIComponent(row.id)}">${icon('pencil-simple')} Sửa</a>
                         <form method="post" action="content.php?type=${type}" data-confirm="${e(`Xóa nội dung “${label.slice(0, 80)}”?`)}">
                           ${csrf(session.token())}

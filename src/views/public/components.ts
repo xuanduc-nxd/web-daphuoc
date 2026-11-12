@@ -131,8 +131,10 @@ export function card(post: Row, href: string, category = 'Hoạt động', class
       : '(max-width:767px) calc(100vw - 36px), 400px';
 
   return `<article class="news-card ${e(className)}" data-filter-item data-search="${e(`${title} ${excerpt} ${post.author || ''}`)}" data-category="${e(category)}" data-date="${stamp(post.date)}" data-year="${e(String(post.date || '').slice(0, 4))}" data-pinned="${post.pinned ? '1' : '0'}">
-    <a class="news-image" href="${e(href)}">
-      <img src="${e(image(post.image))}" srcset="${e(srcset(post.image))}" sizes="${sizes}" data-fallback="assets/images/activity-800.webp" alt="${e(title)}" width="800" height="500" loading="lazy" decoding="async">
+    <a class="news-image${post.image ? '' : ' is-placeholder'}" href="${e(href)}" aria-label="Xem bài: ${e(title)}">
+      ${post.image
+        ? `<img src="${e(image(post.image))}" srcset="${e(srcset(post.image))}" sizes="${sizes}" data-fallback="assets/images/activity-800.webp" alt="${e(title)}" width="800" height="500" loading="lazy" decoding="async">`
+        : `<span class="news-image-placeholder" aria-hidden="true">${icon('notebook')}<span>${e(category)}</span></span>`}
     </a>
     <div class="news-body">
       <div class="article-meta">

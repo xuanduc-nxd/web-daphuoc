@@ -6,7 +6,7 @@ const teamCard = (row: Row): string =>
     <div class="member-avatar">
       ${
         row.image
-          ? `<img src="${e(image(row.image))}" alt="Ảnh đại diện của ${e(row.name)}">`
+          ? `<img src="${e(image(row.image))}" alt="Ảnh đại diện của ${e(row.name)}" width="480" height="600" loading="lazy" decoding="async">`
           : `<div class="avatar-placeholder">${e(String(row.name || '').slice(0, 1).toUpperCase())}</div>`
       }
     </div>

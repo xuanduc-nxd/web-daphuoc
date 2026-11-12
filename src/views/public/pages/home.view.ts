@@ -96,23 +96,23 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
           </button>
         </div>
         <div class="tsnt-impact-wrap">
-          <h3 class="tsnt-impact-title">Tác động của chúng tôi<span class="tsnt-accent-bar"></span></h3>
+          <h3 class="tsnt-impact-title">Cộng đồng của chúng tôi<span class="tsnt-accent-bar"></span></h3>
           <div class="tsnt-impact-grid">
             <div class="tsnt-impact-card">
-              <div class="tsnt-impact-num-row"><span class="tsnt-impact-Small">Đồng hành</span><span class="tsnt-impact-big">${Math.max(students.length, 15)}+</span><span class="tsnt-impact-Small">em</span></div>
-              <div class="tsnt-impact-label">Sinh viên đang được CLB hỗ trợ &amp; định hướng</div>
+              <div class="tsnt-impact-num-row"><span class="tsnt-impact-big">${students.length}</span><span class="tsnt-impact-Small">sinh viên</span></div>
+              <div class="tsnt-impact-label">Hồ sơ sinh viên được giới thiệu trên website</div>
             </div>
             <div class="tsnt-impact-card">
-              <div class="tsnt-impact-num-row"><span class="tsnt-impact-Small">Hơn</span><span class="tsnt-impact-big">${Math.max(activities.length, 10)}+</span><span class="tsnt-impact-Small">sự kiện</span></div>
-              <div class="tsnt-impact-label">Hoạt động trao học bổng &amp; kết nối cộng đồng</div>
+              <div class="tsnt-impact-num-row"><span class="tsnt-impact-big">${activities.length}</span><span class="tsnt-impact-Small">hoạt động</span></div>
+              <div class="tsnt-impact-label">Câu chuyện hoạt động đã đăng</div>
             </div>
             <div class="tsnt-impact-card">
-              <div class="tsnt-impact-num-row"><span class="tsnt-impact-Small">Hơn</span><span class="tsnt-impact-big">${Math.max(sponsors.length, 20)}+</span><span class="tsnt-impact-Small">đơn vị</span></div>
-              <div class="tsnt-impact-label">Mạnh thường quân &amp; những người bạn đồng hành</div>
+              <div class="tsnt-impact-num-row"><span class="tsnt-impact-big">${sponsors.length}</span><span class="tsnt-impact-Small">đối tác</span></div>
+              <div class="tsnt-impact-label">Người và tổ chức trong danh sách tri ân</div>
             </div>
             <div class="tsnt-impact-card">
-              <div class="tsnt-impact-num-row"><span class="tsnt-impact-big">100%</span><span class="tsnt-impact-Small">trực tiếp</span></div>
-              <div class="tsnt-impact-label">Nguồn đóng góp dành trọn cho học bổng sinh viên</div>
+              <div class="tsnt-impact-num-row"><span class="tsnt-impact-big tsnt-impact-word">Công khai</span></div>
+              <div class="tsnt-impact-label">Thông tin hoạt động và các chương trình đồng hành</div>
             </div>
           </div>
           <div class="tsnt-impact-actions">

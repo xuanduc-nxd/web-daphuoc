@@ -59,11 +59,11 @@ export function teamView(rows: Row[], type: string, session: Session): string {
               ? rows
                   .map(
                     row => `<tr data-filter-item data-search="${e(`${row.name || ''} ${row.school || ''} ${row.major || ''} ${row.direction || ''} ${row.support_needs || ''} ${row.expertise || ''} ${row.position || ''} ${row.board_term || ''} ${row.role_title || ''}`)}" data-category="${e(row.position || '')}" data-date="0">
-                      <td>${student ? e(String(row.direction || '').slice(0, 90)) : row.image ? `<img class="team-thumb" src="${e(adminImage(row.image))}" alt="Ảnh ${e(row.name)}">` : `<span class="team-thumb-placeholder">${e(String(row.name || '').slice(0, 1))}</span>`}</td>
-                      <td><strong>${e(row.name)}</strong>${student ? '' : `<small>${e(row.role_title || row.detail)}</small>`}</td>
-                      <td>${e(student ? `${row.school || ''} · ${row.major || ''}` : `${row.position}${row.position === 'Ban cố vấn' ? '' : ` · ${row.board_term === 'current' ? 'Khóa hiện tại' : row.board_term || 'Chưa phân khóa'}`}`)}</td>
-                      ${student ? `<td>${e(String(row.support_needs || '').slice(0, 100))}</td><td>${e(String(row.expertise || '').slice(0, 100))}</td>` : ''}
-                      <td class="actions">
+                      <td data-label="${student ? 'Định hướng' : 'Ảnh'}">${student ? e(String(row.direction || '').slice(0, 90)) : row.image ? `<img class="team-thumb" src="${e(adminImage(row.image))}" alt="Ảnh ${e(row.name)}">` : `<span class="team-thumb-placeholder">${e(String(row.name || '').slice(0, 1))}</span>`}</td>
+                      <td data-label="Họ tên"><span class="table-primary"><strong>${e(row.name)}</strong>${student ? '' : `<small>${e(row.role_title || row.detail)}</small>`}</span></td>
+                      <td data-label="${student ? 'Trường / ngành' : 'Nhóm'}">${e(student ? `${row.school || ''} · ${row.major || ''}` : `${row.position}${row.position === 'Ban cố vấn' ? '' : ` · ${row.board_term === 'current' ? 'Khóa hiện tại' : row.board_term || 'Chưa phân khóa'}`}`)}</td>
+                      ${student ? `<td data-label="Nhu cầu hỗ trợ">${e(String(row.support_needs || '').slice(0, 100))}</td><td data-label="Chuyên môn">${e(String(row.expertise || '').slice(0, 100))}</td>` : ''}
+                      <td class="actions" data-label="Thao tác">
                         <a href="team-edit.php?id=${encodeURIComponent(row.id)}">${icon('pencil-simple')} Sửa</a>
                         <form method="post" action="team-delete.php" data-confirm="${e(`Xóa hồ sơ của ${row.name}?`)}">
                           ${hidden('version', row.version)}

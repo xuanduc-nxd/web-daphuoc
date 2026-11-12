@@ -62,13 +62,13 @@ export function postsView(rows: Row[], kind: string | null, session: Session): s
                     const published = row.status === 'published';
                     const expired = published && row.kind === 'notification' && !notificationVisible(row);
                     return `<tr data-filter-item data-search="${e(`${row.title || ''} ${row.author || ''}`)}" data-category="${published ? 'published' : 'draft'}" data-date="${stamp(row.date)}">
-                      <td><strong>${e(row.title)}</strong><small>${e(kindLabel(row.kind))} · ${e(strip(row.excerpt))}</small></td>
-                      <td>${e(dateText(row.date))}</td>
-                      <td>
+                      <td data-label="Bài viết"><span class="table-primary"><strong>${e(row.title)}</strong><small>${e(kindLabel(row.kind))} · ${e(strip(row.excerpt))}</small></span></td>
+                      <td data-label="Ngày">${e(dateText(row.date))}</td>
+                      <td data-label="Trạng thái"><span class="table-primary">
                         <span class="status ${published && !expired ? 'published' : 'draft'}">${expired ? 'Hết hạn' : published ? 'Đã đăng' : 'Bản nháp / đã ẩn'}</span>
                         ${row.pinned ? '<small>Đã ghim</small>' : ''}
-                      </td>
-                      <td class="actions">
+                      </span></td>
+                      <td class="actions" data-label="Thao tác">
                         <a href="post-edit.php?id=${encodeURIComponent(row.id)}">${icon('pencil-simple')} Sửa</a>
                         <form method="post" action="post-status.php">
                           ${hidden('version', row.version)}

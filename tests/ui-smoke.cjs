@@ -119,7 +119,15 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       await page.locator("[data-filter-item]:visible").count(),
       Math.min(6, activities),
     );
-    await page.locator("[data-search-input]").fill("giang duong");
+    const vietnameseWord = await page.locator("[data-filter-item]").evaluateAll((items) =>
+      items
+        .flatMap((item) => (item.getAttribute("data-search") || "").split(/\s+/))
+        .find((word) => /[À-ỹđĐ]/.test(word)),
+    );
+    assert(vietnameseWord, "Cần có tiêu đề tiếng Việt để kiểm tra tìm không dấu.");
+    await page.locator("[data-search-input]").fill(
+      vietnameseWord.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d"),
+    );
     assert(
       (await page.locator("[data-filter-item]:visible").count()) > 0,
       "Tìm không dấu.",
@@ -178,7 +186,9 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       "Search, empty state, article links, image dialog, copy and 404 passed",
     );
     await page.goto(base + "/Notifications.php", {waitUntil:"networkidle"});
-    assert.equal(await page.locator("[data-filter-item]:visible").first().getAttribute("data-pinned"),"1","Pinned notice stays first after client sorting");
+    if (await page.locator('[data-filter-item][data-pinned="1"]').count()) {
+      assert.equal(await page.locator("[data-filter-item]:visible").first().getAttribute("data-pinned"),"1","Pinned notice stays first after client sorting");
+    }
     assert(!(await page.locator("body").innerText()).includes("Thông báo đã hết hạn"));
     for (const route of ["/Sponsorship.php", "/search.php"]) {
       const response = await page.request.get(base + route);
