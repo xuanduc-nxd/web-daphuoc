@@ -373,6 +373,20 @@
       changeGalleryImage(event.key === "ArrowLeft" ? -1 : 1);
     }
   });
+  let gallerySwipeStart = null;
+  imageDialog?.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" || activeGallery.length < 2) return;
+    gallerySwipeStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
+  });
+  imageDialog?.addEventListener("pointerup", (event) => {
+    if (!gallerySwipeStart || gallerySwipeStart.id !== event.pointerId) return;
+    const deltaX = event.clientX - gallerySwipeStart.x;
+    const deltaY = event.clientY - gallerySwipeStart.y;
+    gallerySwipeStart = null;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    changeGalleryImage(deltaX < 0 ? 1 : -1);
+  });
+  imageDialog?.addEventListener("pointercancel", () => { gallerySwipeStart = null; });
   document
     .querySelectorAll("[data-close-dialog]")
     .forEach((button) =>

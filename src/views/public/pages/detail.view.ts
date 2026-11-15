@@ -1,6 +1,7 @@
 import { activityGallery } from '../../../core/content.ts';
 import { type Row } from '../../../core/config.ts';
 import { e, icon, image, srcset, dateText, richText, strip, breadcrumb, postHref } from '../components.ts';
+import { youtubeEmbedUrl } from '../../../services/youtube.ts';
 
 function galleryView(gallery: string[], article: Row): string {
   return `<section class="article-gallery" data-article-gallery aria-label="Album ảnh hoạt động">
@@ -116,6 +117,10 @@ export function renderDetailPage(
               </button>`
             : ''
         }
+        ${kind === 'activity' && youtubeEmbedUrl(article.video_uid) ? `<section class="article-video" aria-label="Video hoạt động">
+          <h2>Video hoạt động</h2>
+          <iframe src="${e(youtubeEmbedUrl(article.video_uid))}" title="Video: ${e(article.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        </section>` : ''}
         <div class="article-content">
           ${article.content_format === 'plain' || (kind === 'blog' && !article.content_format) ? e(article.content).replace(/\n/g, '<br>') : richText(String(article.content || ''))}
         </div>

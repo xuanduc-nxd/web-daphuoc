@@ -2,6 +2,7 @@ import { InputError, adminDateValue, randomId, today, type Row, type Table } fro
 import { type Form, type Session, value } from '../../core/http.ts';
 import { type RouteResult } from '../../models/types.ts';
 import { aboutSections, sponsors, record, remove, save } from '../../models/repository.ts';
+import { deleteManagedImages } from '../../models/cloudinary.ts';
 import { uploadedImage } from '../../services/admin.ts';
 import { contentView, contentEditView } from '../../views/admin/pages/content.view.ts';
 import { scalar, integer, flashRedirect, errorMessage, fields, view } from './helpers.ts';
@@ -21,7 +22,11 @@ export async function handleContentList(
       return flashRedirect(session, `content.php?type=${type}`, 'Yêu cầu không hợp lệ.', 'error');
     }
     try {
-      await remove(table, scalar(form, 'id'), integer(form, 'version'));
+      const id = scalar(form, 'id');
+      const existing = await record(table, id);
+      if (!existing) return flashRedirect(session, `content.php?type=${type}`, 'Không tìm thấy nội dung.', 'error');
+      await remove(table, id, integer(form, 'version'));
+      await deleteManagedImages([existing.image]);
       return flashRedirect(session, `content.php?type=${type}`, 'Đã xóa nội dung.');
     } catch (failure) {
       return flashRedirect(session, `content.php?type=${type}`, errorMessage(failure), 'error');
@@ -34,6 +39,8 @@ export async function handleContentList(
     type === 'about' ? 'Giới thiệu CLB' : 'Tri ân & tài trợ',
     contentView(rows, type, session),
     session,
+    200,
+    `content.php?type=${type}`,
   );
 }
 
@@ -60,6 +67,7 @@ export async function handleContentEdit(
       : { id: '', title: '', excerpt: '', content: '', image: '', date: today(), sort_order: 0, version: 1 };
 
   let error = '';
+  const uploadedThisRequest: string[] = [];
 
   if (method === 'POST') {
     if (!session.check(form)) {
@@ -84,7 +92,7 @@ export async function handleContentEdit(
         }
         date = adminDateValue(row.date);
         const uploaded = await uploadedImage(form, 'sponsor');
-        if (uploaded) row.image = uploaded;
+        if (uploaded) { uploadedThisRequest.push(uploaded); row.image = uploaded; }
       }
 
       if (row.sort_order < 0 || row.sort_order > 100000) {
@@ -101,8 +109,10 @@ export async function handleContentEdit(
       if (type === 'sponsor') payload.date = date;
 
       await save(table, payload, existing ? row.version : undefined);
+      if (existing?.image && existing.image !== row.image) await deleteManagedImages([existing.image]);
       return flashRedirect(session, `content.php?type=${type}`, 'Đã lưu nội dung.');
     } catch (failure) {
+      await deleteManagedImages(uploadedThisRequest);
       error = errorMessage(failure);
     }
   }
@@ -112,5 +122,7 @@ export async function handleContentEdit(
     existing ? 'Sửa nội dung' : 'Thêm nội dung',
     contentEditView(row, existing, type, error, session),
     session,
+    200,
+    `content.php?type=${type}`,
   );
 }

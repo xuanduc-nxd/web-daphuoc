@@ -12,6 +12,7 @@ create table if not exists public.posts (
     content_format text not null default 'plain' check (content_format in ('plain', 'html')),
     image text not null default '',
     gallery jsonb not null default '[]'::jsonb,
+    video_uid text not null default '',
     author text not null default '',
     role text not null default '',
     date date,
@@ -24,6 +25,7 @@ create table if not exists public.posts (
     unique (kind, legacy_id)
 );
 alter table public.posts add column if not exists gallery jsonb not null default '[]'::jsonb;
+alter table public.posts add column if not exists video_uid text not null default '';
 alter table public.posts add column if not exists pinned boolean not null default false;
 alter table public.posts add column if not exists expires_on date;
 create index if not exists posts_public_listing on public.posts (kind, status, date desc, id);
@@ -83,6 +85,10 @@ create table if not exists public.about_sections (
 create table if not exists public.settings (
     id text primary key check (id = 'main'),
     site_name text not null default 'CLB Golf Đa Phước',
+    header_label text not null default 'Quỹ học bổng',
+    header_title text not null default 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN',
+    banner_image text not null default 'assets/images/hero-clb.jpg',
+    about_banner_image text not null default 'assets/images/hero-clb.jpg',
     notice text not null default 'Đồng hành cùng thế hệ trẻ Đà Nẵng',
     contact text not null default '',
     phone text not null default '',
@@ -93,12 +99,44 @@ create table if not exists public.settings (
     tiktok text not null default '',
     threads text not null default '',
     hero_image text not null default '',
+    about_hero_image text not null default 'Image/act-1.jpg',
+    gallery jsonb not null default '[]'::jsonb check (jsonb_typeof(gallery) = 'array' and jsonb_array_length(gallery) <= 20),
     current_board_label text not null default '',
     version integer not null default 1,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 alter table public.settings add column if not exists current_board_label text not null default '';
+alter table public.settings add column if not exists header_label text not null default 'Quỹ học bổng';
+alter table public.settings add column if not exists header_title text not null default 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN';
+alter table public.settings add column if not exists banner_image text not null default 'assets/images/hero-clb.jpg';
+do $$
+begin
+    if not exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = 'settings' and column_name = 'about_banner_image'
+    ) then
+        alter table public.settings add column about_banner_image text not null default '';
+        update public.settings set about_banner_image = banner_image;
+        alter table public.settings alter column about_banner_image set default 'assets/images/hero-clb.jpg';
+    end if;
+end;
+$$;
+alter table public.settings add column if not exists about_hero_image text not null default 'Image/act-1.jpg';
+alter table public.settings add column if not exists gallery jsonb not null default '[]'::jsonb;
+do $$
+begin
+    if not exists (
+        select 1 from pg_constraint
+        where conrelid = 'public.settings'::regclass
+          and conname = 'settings_gallery_valid'
+    ) then
+        alter table public.settings
+            add constraint settings_gallery_valid
+            check (jsonb_typeof(gallery) = 'array' and jsonb_array_length(gallery) <= 20);
+    end if;
+end;
+$$;
 
 -- PHP handles password verification and server sessions.
 -- This table is private; it does not duplicate Supabase Auth users.

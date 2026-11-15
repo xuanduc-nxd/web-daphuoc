@@ -1,4 +1,4 @@
-# Triển khai Render + Vercel + Supabase
+# Triển khai Render + Vercel + Supabase + Cloudinary
 
 Chuẩn bị project và dữ liệu theo [SUPABASE_SETUP.md](SUPABASE_SETUP.md) trước khi công bố.
 
@@ -8,9 +8,11 @@ Trước khi triển khai phiên bản có album Hoạt động, ghim/hết hạ
 
 Để nhận bài gửi công khai trên Blog, chạy thêm `supabase-public-blog.sql` trên project hiện có trước khi deploy. Nếu vừa chạy lại toàn bộ `supabase-setup.sql` thì đã có phần này. Kiểm tra một bài gửi thử ở `/admin/posts.php?kind=blog`: bài phải ở trạng thái nháp cho đến khi quản trị viên duyệt.
 
+Trước khi dùng album ảnh trong Thông tin website, chạy `supabase-site-gallery.sql` trên project Supabase hiện có. Để quản lý ảnh nền và ảnh trung tâm riêng cho trang chủ và Giới thiệu, chạy thêm `supabase-home-about-images.sql`. Sau khi deploy, tải ảnh thử, kiểm tra ảnh đúng trang và kiểm tra album trên điện thoại.
+
 ## Kiến trúc
 
-Render chạy toàn bộ website TypeScript/Node.js và kết nối Supabase. Vercel chỉ làm điểm vào công khai, chuyển tiếp đường dẫn sang Render bằng external rewrite. Dùng project Vercel có Root Directory là `vercel-proxy`; không chọn thư mục gốc của repository. Mật khẩu và Supabase secret key chỉ đặt ở Render, không đặt trên Vercel.
+Render chạy toàn bộ website TypeScript/Node.js, kết nối Supabase cho dữ liệu và Cloudinary cho ảnh. Vercel chỉ làm điểm vào công khai, chuyển tiếp đường dẫn sang Render bằng external rewrite. Dùng project Vercel có Root Directory là `vercel-proxy`; không chọn thư mục gốc của repository. Các secret chỉ đặt ở Render, không đặt trên Vercel.
 
 ## 1. Render
 
@@ -22,12 +24,17 @@ Tạo Web Service từ repository GitHub này, chọn nhánh chứa bản triể
 | APP_PREVIEW_MODE | false |
 | SUPABASE_URL | URL project Supabase |
 | SUPABASE_SECRET_KEY | Secret key dùng riêng cho backend Node.js |
+| CLOUDINARY_CLOUD_NAME | Cloud name trong Cloudinary Console |
+| CLOUDINARY_API_KEY | API key của Cloudinary |
+| CLOUDINARY_API_SECRET | API secret, chỉ dùng phía máy chủ |
 
 Không cần SHEETDB_API_LINK, ADMIN_PASSWORD, ADMIN_PASSWORD_HASH hoặc APP_DATA_DIR. Các biến cũ có thể gỡ sau khi chuyển dữ liệu và kiểm thử thành công.
 
 Không đưa .env/secret key vào Git. Docker loại .env khỏi image; máy chủ Node chỉ phục vụ tài nguyên tĩnh trong `public/` và các URL đã khai báo. `src/`, `data/`, `uploads/`, `scripts/` và `tests/` không thể truy cập trực tiếp qua HTTP. Các script khởi tạo chỉ chạy từ CLI.
 
-Database nằm trên Supabase; ảnh mới và ảnh local được chuyển vào Storage. Website không dùng filesystem tạm của Render để lưu nội dung mới. APP_UPLOAD_DIR chỉ còn dùng khi nhập/đọc ảnh local cũ; sau khi chuyển hết ảnh, website không cần disk để lưu ảnh mới.
+Database nằm trên Supabase; ảnh mới được tối ưu WebP và lưu trên Cloudinary. Website không dùng filesystem tạm của Render hoặc Supabase Storage để lưu ảnh mới. APP_UPLOAD_DIR chỉ còn dùng khi nhập/đọc ảnh local cũ.
+
+Sau khi sao lưu, kiểm tra trước ảnh Supabase cần chuyển bằng `npm run migrate:cloudinary`; thêm `-- --apply` để tải ảnh lên Cloudinary và cập nhật URL trong database. Script không tự xóa ảnh nguồn Supabase, giúp có thể đối chiếu và quay lại nếu cần.
 
 Phiên đăng nhập được lưu trong `.runtime/sessions` trên ổ đĩa của tiến trình Node. Khi Render khởi động lại hoặc chuyển instance, admin cần đăng nhập lại. Render Free có chế độ ngủ khi ít truy cập. Supabase Free có giới hạn dung lượng, băng thông và có thể tạm dừng project ít hoạt động. Chọn gói phù hợp nếu cần truy cập liên tục; tham khảo [Render Free](https://render.com/docs/free) và [Supabase pricing](https://supabase.com/pricing).
 
@@ -45,7 +52,7 @@ Deploy rồi mở URL `.vercel.app` của project. Kiểm tra đăng nhập admi
 
 - Chạy `npm run check-supabase`; xác nhận settings/main và tài khoản admin đã có.
 - Đăng nhập, tạo một bài nháp, kiểm tra nháp không xuất hiện công khai, xuất bản/ẩn/xóa bài thử.
-- Upload một ảnh thử, kiểm tra public URL; deploy lại và xác nhận bản ghi/ảnh vẫn còn.
+- Upload một ảnh thử, xác nhận URL thuộc `res.cloudinary.com`, có biến thể responsive và vẫn còn sau khi deploy lại.
 - Kiểm tra cập nhật điện thoại/email trong admin phản ánh ở chân trang và Liên hệ.
 - Xác nhận editor bị chặn khỏi cài đặt, giới thiệu và tài trợ; admin có thể quản lý các mục này.
 - Đối chiếu số lượng bản ghi và các liên kết bài viết trước/sau khi chuyển dữ liệu.
@@ -59,6 +66,6 @@ Kiểm tra cả trang chủ, các trang nội dung, admin, ảnh và HTTPS qua t
 
 ## Sao lưu
 
-Lưu bản sao ngoài Supabase cho cả database và ảnh. Backup database không bao gồm file Storage. Không xóa data/ và uploads/ cũ cho đến khi đã đối chiếu dữ liệu, chuyển ảnh, xác nhận trên project thật và có bản sao dự phòng.
+Lưu bản sao riêng cho database Supabase và thư viện ảnh Cloudinary. Backup database không bao gồm file ảnh. Không xóa ảnh Supabase Storage, data/ hoặc uploads/ cũ cho đến khi đã đối chiếu dữ liệu, xác nhận Cloudinary trên website thật và có bản sao dự phòng.
 
 Nếu project từng dùng bảng site_data JSONB cũ, SQL mới giữ nguyên bảng đó. Script nhập hiện lấy nguồn từ file local; cần xuất dữ liệu mới nhất từ site_data riêng trước khi nhập nếu trên server có dữ liệu mới hơn bản local.

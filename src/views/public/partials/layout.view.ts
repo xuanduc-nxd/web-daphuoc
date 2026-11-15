@@ -29,7 +29,7 @@ export function publicFrame(
   <link rel="preload" href="assets/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="CSS/fonts.css">
   <link rel="stylesheet" href="CSS/icons.css">
-  <link rel="stylesheet" href="CSS/site.css?v=tsnt-ui-6">
+  <link rel="stylesheet" href="CSS/site.css?v=youtube-1">
   <script src="JS/site.js?v=tsnt-ui-6" defer></script>
 </head>
 <body>

@@ -3,8 +3,9 @@ import { readFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import { fileTypeFromFile } from 'file-type';
 import { imageSize } from 'image-size';
-import { StorageError, ConflictError, InputError, imageName, type Row } from '../core/config.ts';
-import { supabaseConfigured, supabaseRequest, supabaseJson, select, uploadFile } from '../models/supabase.ts';
+import { StorageError, ConflictError, InputError, type Row } from '../core/config.ts';
+import { supabaseConfigured, supabaseRequest, supabaseJson, select } from '../models/supabase.ts';
+import { deleteManagedImages, uploadImage } from '../models/cloudinary.ts';
 import { type Form, type Session, file, files } from '../core/http.ts';
 
 export async function adminAccount(id: string): Promise<Row | null> {
@@ -44,7 +45,7 @@ export async function authenticate(username: string, password: string, remoteAdd
 
 const allowed: Record<string,string>={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
 async function validateUpload(upload: NonNullable<ReturnType<typeof file>>): Promise<{bytes:Buffer,mime:string,extension:string}> {
-  if (upload.size > 20*1024*1024) throw new InputError('Ảnh vượt quá 20 MB.');
+  if (upload.size > 10*1024*1024) throw new InputError('Ảnh vượt quá 10 MB.');
   const detected=await fileTypeFromFile(upload.path);
   const mime=detected?.mime || '';
   if (!allowed[mime] || mime !== upload.mime) throw new InputError('Chỉ chấp nhận ảnh JPG, PNG, WebP hoặc GIF.');
@@ -53,17 +54,22 @@ async function validateUpload(upload: NonNullable<ReturnType<typeof file>>): Pro
   catch { throw new InputError('Ảnh không hợp lệ.'); }
   return {bytes,mime,extension:allowed[mime]};
 }
-export async function uploadedImage(form: Form, prefix: string): Promise<string | null> {
-  const upload=file(form,'image');
+export async function uploadedImage(form: Form, prefix: string, field = 'image'): Promise<string | null> {
+  const upload=file(form,field);
   if (!upload) return null;
   const valid=await validateUpload(upload);
-  return uploadFile(imageName(prefix,valid.extension),valid.mime,valid.bytes);
+  return uploadImage(prefix,valid.mime,valid.bytes);
 }
 export async function uploadedImages(form: Form, field: string, prefix: string, remaining: number): Promise<string[]> {
   const list=files(form,field);
   if (list.length > remaining) throw new InputError('Album có tối đa 20 ảnh.');
   const validated=await Promise.all(list.map(validateUpload));
-  const urls=[];
-  for (const valid of validated) urls.push(await uploadFile(imageName(prefix,valid.extension),valid.mime,valid.bytes));
-  return urls;
+  const urls:string[]=[];
+  try {
+    for (const valid of validated) urls.push(await uploadImage(prefix,valid.mime,valid.bytes));
+    return urls;
+  } catch (error) {
+    await deleteManagedImages(urls);
+    throw error;
+  }
 }

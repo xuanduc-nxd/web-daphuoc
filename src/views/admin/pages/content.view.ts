@@ -118,7 +118,7 @@ export function contentEditView(
       !about
         ? `<label>Ảnh
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input>
-            <small>Tối đa 20 MB.</small>
+            <small>Tối đa 10 MB; ảnh được tự động thu nhỏ và chuyển sang WebP.</small>
             <small data-image-error class="image-error" hidden></small>
             <img class="upload-preview" data-image-preview data-original="${e(row.image ? adminImage(row.image) : '')}" src="${e(row.image ? adminImage(row.image) : '../Image/act-1.jpg')}" alt="Ảnh tài trợ" ${!row.image ? 'hidden' : ''}>
           </label>`

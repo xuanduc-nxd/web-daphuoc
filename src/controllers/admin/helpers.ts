@@ -29,9 +29,10 @@ export function view(
   body: string,
   session: Session,
   status = 200,
+  section?: string,
 ): RouteResult {
   return {
-    html: adminFrame(page, title, body, session, session.consumeFlash()),
+    html: adminFrame(page, title, body, session, session.consumeFlash(), section),
     status,
   };
 }

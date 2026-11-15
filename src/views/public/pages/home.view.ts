@@ -2,53 +2,36 @@ import { type Row } from '../../../core/config.ts';
 import { type PublicPageModel } from '../../../models/types.ts';
 import { e, icon, image, srcset, dateText, strip, card, empty, postHref } from '../components.ts';
 
+function siteGalleryView(gallery: string[]): string {
+  if (!gallery.length) return '';
+  return `<section class="home-site-gallery article-gallery" data-article-gallery aria-label="Album ảnh CLB Golf Đa Phước">
+    <div class="article-gallery-heading">
+      <div>
+        <p class="home-gallery-kicker">ALBUM ẢNH</p>
+        <h3>Khoảnh khắc của CLB</h3>
+        <p class="home-gallery-copy">Bấm vào ảnh để xem lớn hoặc vuốt ngang để xem thêm.</p>
+      </div>
+      <div class="article-gallery-controls" aria-label="Điều hướng album ảnh" hidden>
+        <button type="button" data-gallery-scroll-previous aria-label="Ảnh trước" disabled>${icon('arrow-left')}</button>
+        <button type="button" data-gallery-scroll-next aria-label="Ảnh tiếp theo">${icon('arrow-right')}</button>
+      </div>
+    </div>
+    <div class="article-gallery-grid" data-gallery-track tabindex="0" aria-label="Vuốt ngang hoặc dùng nút mũi tên để xem thêm ảnh">
+      ${gallery.map((url,index) => `<button type="button" data-lightbox="${e(image(url))}" data-gallery-group="site-gallery" aria-label="Xem ảnh album CLB ${index + 1}">
+        <img src="${e(image(url))}" srcset="${e(srcset(url))}" sizes="(max-width:767px) 78vw, 320px" data-fallback="assets/images/activity-800.webp" alt="Khoảnh khắc CLB Golf Đa Phước ${index + 1}" width="640" height="480" loading="lazy" decoding="async">
+      </button>`).join('')}
+    </div>
+  </section>`;
+}
+
 export function renderHomePage(site: Row, data: PublicPageModel): string {
   const { activities = [], notifications = [], sponsors = [], students = [], blogs = [] } = data;
   const recent = activities.slice(0, 4);
   const first = recent[0];
   const heroImg = image(site.hero_image);
-
-  const carouselSlides = recent.length
-    ? recent.map((item, idx) => ({
-        img: image(item.image),
-        srcset: srcset(item.image),
-        title: String(item.title || 'Hoạt động CLB Golf Đa Phước'),
-        desc: strip(item.excerpt) || 'Hành trình kết nối đam mê và tiếp sức ước mơ sinh viên Đà Nẵng.',
-        href: postHref(item),
-        active: idx === 0,
-      }))
-    : [
-        {
-          img: heroImg,
-          srcset: srcset(heroImg),
-          title: 'Lễ trao học bổng & Đồng hành Sinh viên',
-          desc: 'Tiếp sức học sinh, sinh viên vượt khó vươn lên trong học tập tại Đà Nẵng.',
-          href: 'Activities.php',
-          active: true,
-        },
-      ];
-
-  const heroCarousel = `<div class="tsnt-carousel" data-hero-carousel aria-roledescription="carousel" aria-label="Khoảnh khắc nổi bật">
-    <div class="tsnt-carousel-Stage">
-      ${carouselSlides
-        .map(
-          (slide, idx) => `<div class="tsnt-carousel-slide ${slide.active ? 'is-active' : ''}" data-hero-slide="${idx}" ${slide.active ? '' : 'hidden'}>
-        <div class="tsnt-slide-frame">
-          <button type="button" class="tsnt-slide-lightbox" data-lightbox="${e(slide.img)}" aria-label="Xem ảnh: ${e(slide.title)}">
-            <img src="${e(slide.img)}" srcset="${e(slide.srcset)}" sizes="(max-width:767px) calc(100vw - 36px), 580px" data-fallback="assets/images/activity-800.webp" alt="${e(slide.title)}" width="900" height="600" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
-          </button>
-          ${carouselSlides.length > 1 ? `<button type="button" class="tsnt-carousel-arrow prev" data-hero-prev aria-label="Slide trước">${icon('caret-left')}</button><button type="button" class="tsnt-carousel-arrow next" data-hero-next aria-label="Slide tiếp theo">${icon('caret-right')}</button>` : ''}
-        </div>
-        <div class="tsnt-slide-caption">
-          <a href="${e(slide.href)}" class="tsnt-slide-title">${e(slide.title)}</a>
-          <p class="tsnt-slide-desc">${e(slide.desc)}</p>
-        </div>
-      </div>`,
-        )
-        .join('')}
-    </div>
-    ${carouselSlides.length > 1 ? `<div class="tsnt-carousel-dots" role="tablist" aria-label="Chọn slide">${carouselSlides.map((_, idx) => `<button type="button" class="tsnt-dot ${idx === 0 ? 'is-active' : ''}" data-hero-dot="${idx}" aria-label="Xem mục ${idx + 1}" aria-current="${idx === 0 ? 'true' : 'false'}"></button>`).join('')}</div>` : ''}
-  </div>`;
+  const siteGallery = Array.isArray(site.gallery)
+    ? [...new Set(site.gallery.filter((url: unknown): url is string => typeof url === 'string' && Boolean(url)))]
+    : [];
 
   const noticeRows = notifications.slice(0, 5);
   const shiningStudents = students.slice(0, 3);
@@ -57,9 +40,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
   return `<main id="main-content">
     <section class="home-hero tsnt-hero">
       <div class="tsnt-hero-bg" aria-hidden="true">
-        <div class="tsnt-hero-glow-left"></div>
-        <div class="tsnt-hero-glow-right"></div>
-        <div class="tsnt-hero-grid"></div>
+        <img src="${e(image(site.banner_image, 'assets/images/hero-clb.jpg'))}" data-fallback="assets/images/hero-clb.jpg" alt="" width="2048" height="1536" fetchpriority="high">
       </div>
       <div class="container hero-layout">
         <div class="hero-copy">
@@ -73,9 +54,6 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
             <a class="button accent" href="Students.php">${icon('graduation-cap')} Về Chương trình Học bổng</a>
             <a class="button ghost-light" href="About.php">${icon('info')} Về ${e(site.site_name)}</a>
           </div>
-        </div>
-        <div class="hero-visual">
-          ${heroCarousel}
         </div>
       </div>
     </section>
@@ -95,6 +73,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
             </span>
           </button>
         </div>
+        ${siteGalleryView(siteGallery)}
         <div class="tsnt-impact-wrap">
           <h3 class="tsnt-impact-title">Cộng đồng của chúng tôi<span class="tsnt-accent-bar"></span></h3>
           <div class="tsnt-impact-grid">

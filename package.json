@@ -11,6 +11,7 @@
     "check": "tsc --noEmit && node --experimental-strip-types --test tests/node/*.test.ts",
     "test:integration": "node tests/node/supabase-integration.cjs",
     "migrate": "node --experimental-strip-types scripts/migrate-supabase.ts",
+    "migrate:cloudinary": "node --experimental-strip-types scripts/migrate-cloudinary.ts",
     "create-admin": "node --experimental-strip-types scripts/create-admin.ts",
     "check-supabase": "node --experimental-strip-types scripts/check-supabase.ts"
   },

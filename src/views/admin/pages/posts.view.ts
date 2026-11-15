@@ -3,6 +3,7 @@ import { type Row } from '../../../core/config.ts';
 import { type Session } from '../../../core/http.ts';
 import { e, icon, dateText, stamp, kindLabel, strip } from '../../public/components.ts';
 import { csrf, hidden, errorBox, selected, checked, adminImage, dateInput } from '../components.ts';
+import { youtubeEmbedUrl, youtubeWatchUrl } from '../../../services/youtube.ts';
 
 export function postsView(rows: Row[], kind: string | null, session: Session): string {
   return `<section class="page-heading">
@@ -157,16 +158,27 @@ export function postEditView(
         )
         .join('')}
       <label>Thêm ảnh vào album
-        <input type="file" name="gallery[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-gallery-input>
-        <small>Mỗi ảnh tối đa 20 MB. Ảnh mới sẽ được thêm sau ảnh hiện có; bạn có thể đổi thứ tự sau khi lưu.</small>
+        <input type="file" name="gallery[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-gallery-input data-gallery-cover>
+        <small>Mỗi ảnh tối đa 10 MB và được tự động tối ưu WebP. Ảnh mới sẽ được thêm sau ảnh hiện có; bạn có thể đổi thứ tự sau khi lưu.</small>
         <small class="image-error" data-gallery-error hidden></small>
       </label>
       <div class="gallery-new-previews" data-gallery-new></div>
     </section>
+    <section class="gallery-editor" data-kind-section="activity" ${kind !== 'activity' ? 'hidden' : ''}>
+      <h2>Video hoạt động</h2>
+      <p>Mỗi bài có thể gắn một video YouTube. Tải video lên YouTube rồi dán liên kết vào đây.</p>
+      <label>Liên kết video YouTube
+        <input type="url" name="youtube_url" value="${e(youtubeWatchUrl(post.video_uid) || post.video_uid || '')}" placeholder="https://www.youtube.com/watch?v=..." inputmode="url">
+        <small>Hỗ trợ link YouTube thông thường, youtu.be, Shorts và Live. Để trống nếu không muốn hiển thị video.</small>
+      </label>
+      ${youtubeEmbedUrl(post.video_uid) ? `<div class="youtube-admin-preview">
+        <iframe src="${e(youtubeEmbedUrl(post.video_uid))}" title="Video hiện tại của bài viết" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>` : ''}
+    </section>
     <div data-single-image-section ${kind === 'activity' ? 'hidden' : ''}>
       <label>Ảnh đại diện
         <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input>
-        <small>JPG, PNG, WebP hoặc GIF; tối đa 20 MB.</small>
+        <small>JPG, PNG, WebP hoặc GIF; tối đa 10 MB và được tự động tối ưu WebP.</small>
         <small class="image-error" data-image-error hidden></small>
         <img class="upload-preview" data-image-preview data-original="${e(existing?.image ? adminImage(existing.image) : '')}" src="${e(post.image ? adminImage(post.image) : '../Image/act-1.jpg')}" alt="Ảnh đại diện được chọn" ${!post.image || removeImage ? 'hidden' : ''}>
       </label>

@@ -1,5 +1,5 @@
-// PostgreSQL executes the real schema. Only Supabase's HTTP gateway/Storage are
-// emulated locally; no credentials or writes to a real Supabase project.
+// PostgreSQL executes the real schema. Supabase's HTTP gateway/legacy Storage
+// and Cloudinary's upload API are emulated locally; no real services are used.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -14,6 +14,7 @@ const root = path.resolve(__dirname, "../..");
 const node = process.execPath;
 const secret = "sb_secret_local_integration_fixture";
 const password = "ui-review-password-42";
+  const cloudinaryKey = "cloudinary-test-key";
 const tables = ["posts", "members", "sponsors", "about_sections", "settings", "admin_users", "admin_login_attempts", "public_blog_submission_attempts"];
 const identifier = value => {
   assert.match(value, /^[a-z_][a-z0-9_]*$/);
@@ -31,8 +32,9 @@ const freePort = async () => {
   const db = new PGlite();
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "clb-supabase-test-"));
   fs.mkdirSync(path.join(temp, "sessions"));
-  let server, web, failBackend = false, storageUploadError = null;
+  let server, web, failBackend = false, storageUploadError = null, cloudinaryUploadError = null;
   const objects = new Map();
+  const cloudinaryObjects = new Map();
   const operations = [];
   let queue = Promise.resolve();
   try {
@@ -42,6 +44,11 @@ const freePort = async () => {
     const blogMigration = fs.readFileSync(path.join(root, "supabase-public-blog.sql"), "utf8");
     await db.exec(blogMigration);
     await db.exec(blogMigration);
+    await db.exec("alter table public.posts drop column video_uid");
+    const videoMigration = fs.readFileSync(path.join(root, "supabase-youtube-video.sql"), "utf8");
+    await db.exec(videoMigration);
+    await db.exec(videoMigration);
+    assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='posts' and column_name='video_uid'")).rows[0].n,1,"YouTube video migration adds the post column and can be rerun");
     await db.exec("alter table public.members drop column direction; alter table public.members drop column support_needs; alter table public.members drop column expertise");
     const studentMigration = fs.readFileSync(path.join(root, "supabase-student-fields.sql"), "utf8");
     await db.exec(studentMigration);
@@ -53,6 +60,24 @@ const freePort = async () => {
     await db.exec(boardMigration);
     assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='members' and column_name in ('board_term','term_order','role_title')")).rows[0].n,3,"Board migration adds member columns and can be rerun");
     assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name='current_board_label'")).rows[0].n,1,"Board migration adds current term label");
+    await db.exec("alter table public.settings drop column header_label; alter table public.settings drop column header_title; alter table public.settings drop column banner_image");
+    const brandingMigration = fs.readFileSync(path.join(root, "supabase-branding-settings.sql"), "utf8");
+    await db.exec(brandingMigration);
+    await db.exec(brandingMigration);
+    assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name in ('header_label','header_title','banner_image')")).rows[0].n,3,"Branding migration adds all settings fields and can be rerun");
+    await db.exec("insert into public.settings(id,banner_image) values('main','assets/images/activity-800.webp')");
+    await db.exec("alter table public.settings drop column about_banner_image; alter table public.settings drop column about_hero_image");
+    const pageImagesMigration = fs.readFileSync(path.join(root, "supabase-home-about-images.sql"), "utf8");
+    await db.exec(pageImagesMigration);
+    await db.exec(pageImagesMigration);
+    assert.equal((await db.query("select about_banner_image from public.settings where id='main'")).rows[0].about_banner_image,'assets/images/activity-800.webp',"About background starts with the previous shared background");
+    assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name in ('about_banner_image','about_hero_image')")).rows[0].n,2,"Page image migration adds independent About fields and can be rerun");
+    await db.exec("delete from public.settings where id='main'");
+    await db.exec("alter table public.settings drop column gallery");
+    const siteGalleryMigration = fs.readFileSync(path.join(root, "supabase-site-gallery.sql"), "utf8");
+    await db.exec(siteGalleryMigration);
+    await db.exec(siteGalleryMigration);
+    assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name='gallery'")).rows[0].n,1,"Site gallery migration adds the settings column and can be rerun");
     await db.exec("update storage.buckets set file_size_limit=5242880 where id='site-media'");
     await db.exec(ddl);
     assert.equal((await db.query("select file_size_limit::int as bytes from storage.buckets where id='site-media'")).rows[0].bytes,20*1024*1024,"Existing media bucket upgraded to 20 MB");
@@ -81,6 +106,34 @@ const freePort = async () => {
           if (!object) return send(404, {});
           response.writeHead(200, {"Content-Type": object.mime});
           return response.end(object.bytes);
+        }
+        if (parts[0] === "v1_1" && parts[1] === "test-cloud" && parts[2] === "image") {
+          const chunks = [];
+          for await (const chunk of request) chunks.push(chunk);
+          const bytes = Buffer.concat(chunks);
+          if (parts[3] === "upload") {
+            if (cloudinaryUploadError) return send(cloudinaryUploadError.status, cloudinaryUploadError.body);
+            const source = bytes.toString("latin1");
+            const field = name => new RegExp('name="' + name + '"\\r\\n\\r\\n([^\\r\\n]+)').exec(source)?.[1] || "";
+            const publicId = field("public_id");
+            assert.match(publicId,/^clb-golf\/(?:activity|gallery|post|team|sponsor|banner|hero)\/[a-f0-9]{32}$/);
+            assert.equal(field("api_key"),cloudinaryKey);
+            assert.equal(field("format"),"webp");
+            assert.equal(field("overwrite"),"false");
+            assert.match(field("transformation"),/^c_limit,w_(?:1200|2000|2400),h_\d+\/q_(?:80|82)$/);
+            assert.match(field("signature"),/^[a-f0-9]{40}$/);
+            cloudinaryObjects.set(publicId,{requestBytes:bytes.length,transformation:field("transformation")});
+            return send(200,{secure_url:"https://res.cloudinary.com/test-cloud/image/upload/v1770000000/"+publicId+".webp",public_id:publicId,format:"webp"});
+          }
+          if (parts[3] === "destroy") {
+            const form = new URLSearchParams(bytes.toString());
+            assert.equal(form.get("api_key"),cloudinaryKey);
+            assert.equal(form.get("invalidate"),"true");
+            assert.match(form.get("signature") || "",/^[a-f0-9]{40}$/);
+            const existed = cloudinaryObjects.delete(form.get("public_id"));
+            return send(200,{result:existed ? "ok" : "not found"});
+          }
+          return send(404,{});
         }
         if (request.headers.apikey !== secret) return send(401, {error:"Unauthorized"});
         assert.equal(request.headers.authorization, undefined, "New secret keys only in apikey");
@@ -167,7 +220,7 @@ const freePort = async () => {
     });
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
     const api = "http://127.0.0.1:" + server.address().port;
-    const env = {...process.env, APP_ENV:"test", APP_PREVIEW_MODE:"false", SUPABASE_URL:api, SUPABASE_SECRET_KEY:secret, ADMIN_SETUP_PASSWORD:password};
+    const env = {...process.env, APP_ENV:"test", APP_PREVIEW_MODE:"false", SUPABASE_URL:api, SUPABASE_SECRET_KEY:secret, CLOUDINARY_API_BASE:api, CLOUDINARY_CLOUD_NAME:"test-cloud", CLOUDINARY_API_KEY:cloudinaryKey, CLOUDINARY_API_SECRET:"cloudinary-test-secret", ADMIN_SETUP_PASSWORD:password};
     const nodeRun = (file, args = [], extra = {}) => run(node, ["--experimental-strip-types",file, ...args], {cwd:root, env:{...env,...extra}, maxBuffer:1024*1024});
     await nodeRun("scripts/migrate-supabase.ts", ["--apply"]);
     const initialCount = (await db.query("select count(*)::int as n from posts")).rows[0].n;
@@ -241,6 +294,11 @@ const freePort = async () => {
 
     const editor = await request("/admin/post-edit.php?kind=activity");
     const form = {token:field(editor.html,"token"),id:"",version:"1",kind:"activity",title:"Hoạt động kiểm thử Supabase",excerpt:"Nội dung kiểm thử",content:"Nội dung không ghi vào dữ liệu thật.",author:"CLB",role:"CLB",date:"14/10/2026",status:"draft"};
+    const forgedVideoPage = await request("/admin/post-edit.php?kind=activity");
+    const forgedVideo = await request("/admin/post-edit.php",{...form,title:"Video không hợp lệ",youtube_url:"https://youtube.com.evil.example/watch?v=M7lc1UVf-VE",token:field(forgedVideoPage.html,"token")});
+    assert.equal(forgedVideo.status,200,"Non-YouTube video URL is rejected");
+    assert(forgedVideo.html.includes("Liên kết YouTube không hợp lệ"));
+    assert.equal((await db.query("select count(*)::int as n from posts where title='Video không hợp lệ'")).rows[0].n,0);
     const withGallery = (base, gallery, removed = [], cover = "", positions = []) => {
       const data = new FormData();
       for (const [key,value] of Object.entries(base)) data.append(key,value);
@@ -254,6 +312,7 @@ const freePort = async () => {
     };
     const uploadedForm = new FormData();
     for (const [key,value] of Object.entries(form)) uploadedForm.append(key,value);
+    uploadedForm.append("youtube_url","https://youtu.be/M7lc1UVf-VE?si=test");
     const photo = fs.readFileSync(path.join(root,"tests/fixtures/upload.png"));
     for (let index=0;index<3;index++) uploadedForm.append("gallery[]",new Blob([photo],{type:"image/png"}),"image-"+index+".png");
     uploadedForm.append("gallery_cover","new:1");
@@ -262,17 +321,19 @@ const freePort = async () => {
     assert(post);
     assert.equal(post.gallery.length,3,"Activity album stores three images");
     assert.equal(post.image,post.gallery[1],"Selected cover is saved");
-    assert(post.image.startsWith(api+"/storage/v1/object/public/site-media/activity-"));
-    assert.equal((await fetch(post.image)).status,200,"Uploaded image served publicly");
+    assert.equal(post.video_uid,"M7lc1UVf-VE","YouTube URL is stored as a video ID");
+    assert(post.image.startsWith("https://res.cloudinary.com/test-cloud/image/upload/v1770000000/clb-golf/activity/"));
+    assert(cloudinaryObjects.has(post.image.match(/v\d+\/(.*)\.webp$/)[1]),"Uploaded image is stored by Cloudinary");
     assert.equal((await request("/detail.php?type=activities&id="+post.id)).status,404);
     assert(!(await request("/Activities.php")).html.includes(form.title));
-    const saveA = {...form,id:post.id,version:"1",status:"published",title:"Hoạt động Supabase đã xuất bản"};
+    const saveA = {...form,id:post.id,version:"1",status:"published",title:"Hoạt động Supabase đã xuất bản",youtube_url:"https://www.youtube.com/watch?v=M7lc1UVf-VE"};
     assert.equal((await request("/admin/post-edit.php?id="+post.id,withGallery(saveA,post.gallery,[],post.image))).status,302);
     post = (await db.query("select * from posts where id=$1",[post.id])).rows[0];
     assert.equal(post.version,2);
     assert((await request("/")).html.includes(saveA.title));
     assert((await request("/Activities.php")).html.includes(saveA.title));
     assert.equal((await request("/detail.php?type=activities&id="+post.id)).status,200);
+    assert((await request("/detail.php?type=activities&id="+post.id)).html.includes("https://www.youtube-nocookie.com/embed/M7lc1UVf-VE"),"Published activity embeds its YouTube video");
     const stale = {...saveA,version:"1",title:"Không được ghi đè"};
     const conflict = await request("/admin/post-edit.php?id="+post.id,withGallery(stale,post.gallery,[post.image]));
     assert.equal(conflict.status,200);
@@ -282,9 +343,11 @@ const freePort = async () => {
     const imageEditor = await request("/admin/post-edit.php?id="+post.id);
     assert(imageEditor.html.includes('name="gallery_keep[]"'),"Existing album can be edited");
     const updateGallery = {...saveA,version:"2",token:field(imageEditor.html,"token")};
+    const removedGalleryPublicId = post.gallery[1].match(/v\d+\/(.*)\.webp$/)[1];
     assert.equal((await request("/admin/post-edit.php?id="+post.id,withGallery(updateGallery,post.gallery,[post.gallery[1]],post.gallery[2],[2,3,1]))).status,302);
     post = (await db.query("select * from posts where id=$1",[post.id])).rows[0];
     assert.equal(post.gallery.length,2,"Image removed from album");
+    assert.equal(cloudinaryObjects.has(removedGalleryPublicId),false,"Removed gallery image is deleted from Cloudinary");
     assert.equal(post.image,post.gallery[0],"Cover follows album selection");
     assert.equal((await request("/detail.php?type=activities&id="+post.id)).html.match(/data-gallery-group="activity"/g).length,2,"Public article shows both remaining photos");
     assert.equal(post.version,3);
@@ -300,8 +363,10 @@ const freePort = async () => {
     assert.equal((await request("/detail.php?type=activities&id="+post.id)).status,404);
     const hidden = await request("/admin/post-edit.php?id="+post.id);
     const hiddenToken = field(hidden.html,"token");
+    const deletedPostPublicIds = post.gallery.map(url => url.match(/v\d+\/(.*)\.webp$/)[1]);
     assert.equal((await request("/admin/post-delete.php",{id:post.id,version:"4",token:hiddenToken})).status,302);
     assert.equal((await db.query("select count(*)::int as n from posts where id=$1",[post.id])).rows[0].n,0);
+    assert(deletedPostPublicIds.every(id => !cloudinaryObjects.has(id)),"Deleting a post deletes its managed Cloudinary images");
     assert.equal((await db.query("select count(*)::int as n from posts")).rows[0].n,initialCount);
     const forged = new FormData();
     const freshEditor = await request("/admin/post-edit.php?kind=activity");
@@ -313,28 +378,27 @@ const freePort = async () => {
     const failedUploadForm = new FormData();
     for (const [key,value] of Object.entries({...form,title:"Lỗi Storage kiểm thử",token:field(failedUploadPage.html,"token")})) failedUploadForm.append(key,value);
     failedUploadForm.append("gallery[]",new Blob([photo],{type:"image/png"}),"storage-error.png");
-    storageUploadError = {status:400,body:{code:"InvalidRequest",message:"Rejected for test"}};
+    cloudinaryUploadError = {status:400,body:{error:{http_code:400,message:"Rejected for test"}}};
     try {
       const failedUpload = await request("/admin/post-edit.php",failedUploadForm);
       assert.equal(failedUpload.status,200);
-      assert(failedUpload.html.includes("HTTP 400, mã InvalidRequest"),"Storage error code is shown in admin");
-    } finally { storageUploadError = null; }
+      assert(failedUpload.html.includes("HTTP 400, mã 400"),"Cloudinary error code is shown in admin");
+    } finally { cloudinaryUploadError = null; }
     assert.equal((await db.query("select count(*)::int as n from posts where title=$1",["Lỗi Storage kiểm thử"])).rows[0].n,0);
-    const largeImage = Buffer.concat([photo, Buffer.alloc(20*1024*1024-photo.length)]);
+    const largeImage = Buffer.concat([photo, Buffer.alloc(10*1024*1024-photo.length)]);
     const largePage = await request("/admin/post-edit.php?kind=activity");
     const largeForm = new FormData();
-    for (const [key,value] of Object.entries({...form,title:"Ảnh 20 MB kiểm thử",token:field(largePage.html,"token")})) largeForm.append(key,value);
+    for (const [key,value] of Object.entries({...form,title:"Ảnh 10 MB kiểm thử",token:field(largePage.html,"token")})) largeForm.append(key,value);
     largeForm.append("gallery[]",new Blob([largeImage],{type:"image/png"}),"large.png");
-    assert.equal((await request("/admin/post-edit.php",largeForm)).status,302,"Image of exactly 20 MB accepted");
-    const largePost = (await db.query("select gallery from posts where title=$1",["Ảnh 20 MB kiểm thử"])).rows[0];
+    assert.equal((await request("/admin/post-edit.php",largeForm)).status,302,"Image of exactly 10 MB accepted");
+    const largePost = (await db.query("select gallery from posts where title=$1",["Ảnh 10 MB kiểm thử"])).rows[0];
     assert.equal(largePost.gallery.length,1);
-    assert.equal(objects.get(new URL(largePost.gallery[0]).pathname.split("/").pop()).bytes.length,20*1024*1024);
     const tooLargePage = await request("/admin/post-edit.php?kind=activity");
     const tooLargeForm = new FormData();
-    for (const [key,value] of Object.entries({...form,title:"Ảnh vượt 20 MB kiểm thử",token:field(tooLargePage.html,"token")})) tooLargeForm.append(key,value);
+    for (const [key,value] of Object.entries({...form,title:"Ảnh vượt 10 MB kiểm thử",token:field(tooLargePage.html,"token")})) tooLargeForm.append(key,value);
     tooLargeForm.append("gallery[]",new Blob([largeImage,Buffer.from([0])],{type:"image/png"}),"too-large.png");
-    assert.equal((await request("/admin/post-edit.php",tooLargeForm)).status,200,"Image over 20 MB rejected");
-    assert.equal((await db.query("select count(*)::int as n from posts where title=$1",["Ảnh vượt 20 MB kiểm thử"])).rows[0].n,0);
+    assert.equal((await request("/admin/post-edit.php",tooLargeForm)).status,200,"Image over 10 MB rejected");
+    assert.equal((await db.query("select count(*)::int as n from posts where title=$1",["Ảnh vượt 10 MB kiểm thử"])).rows[0].n,0);
     const galleryUiPage = await request("/admin/post-edit.php?kind=activity");
     const galleryUiForm = new FormData();
     for (const [key,value] of Object.entries({...form,title:"Album giao diện kiểm thử",status:"published",token:field(galleryUiPage.html,"token")})) galleryUiForm.append(key,value);
@@ -358,7 +422,7 @@ const freePort = async () => {
     for (const [key,value] of Object.entries({...form,id:blogId,version:"1",kind:"blog",title:"Kiểm thử blog",status:"published",token:field(blogEditor.html,"token")})) blogUpload.append(key,value);
     blogUpload.append("image",new Blob([photo],{type:"image/png"}),"blog.png");
     assert.equal((await request("/admin/post-edit.php?id="+blogId,blogUpload)).status,302);
-    assert((await db.query("select image from posts where id=$1",[blogId])).rows[0].image.includes("/post-"));
+    assert((await db.query("select image from posts where id=$1",[blogId])).rows[0].image.includes("/clb-golf/post/"));
     const blogRemoveEditor = await request("/admin/post-edit.php?id="+blogId);
     const blogRemove = {...form,id:blogId,version:"2",kind:"blog",title:"Kiểm thử blog",status:"published",token:field(blogRemoveEditor.html,"token"),remove_image:"1"};
     assert.equal((await request("/admin/post-edit.php?id="+blogId,blogRemove)).status,302);
@@ -454,10 +518,17 @@ const freePort = async () => {
     assert((await request("/About.php")).html.includes("Phương thức kiểm thử"));
     const setting = await request("/admin/settings.php");
     const current = (await db.query("select * from settings where id='main'")).rows[0];
-    const settingsForm = {...current,token:field(setting.html,"token"),email:"clb@example.com",contact:"Liên hệ kiểm thử"};
+    const settingsForm = {...current,token:field(setting.html,"token"),email:"clb@example.com",contact:"Liên hệ kiểm thử",header_label:"Quỹ học bổng thử",header_title:"CLB THỬ VÀ NHỮNG NGƯỜI BẠN",banner_image:"assets/images/activity-800.webp",about_banner_image:"assets/images/hero-clb.jpg",hero_image:"Image/act-1.jpg",about_hero_image:"assets/images/activity-800.webp"};
     for (const key of ["created_at","updated_at"]) delete settingsForm[key];
     assert.equal((await request("/admin/settings.php",settingsForm)).status,302);
     assert((await request("/contact.php")).html.includes("clb@example.com"));
+    const brandedHome = (await request("/")).html;
+    const brandedAbout = (await request("/About.php")).html;
+    assert(brandedHome.includes("Quỹ học bổng thử") && brandedHome.includes("CLB THỬ VÀ NHỮNG NGƯỜI BẠN"),"Header branding follows admin settings");
+    assert(brandedHome.includes('class="tsnt-hero-bg"') && brandedHome.includes('src="assets/images/activity-800.webp"'),"Home banner follows admin settings");
+    assert(brandedHome.includes('class="tsnt-showcase-media" data-lightbox="Image/act-1.jpg"'),"Home central image follows admin settings");
+    assert(brandedAbout.includes('class="about-banner-photo" src="assets/images/hero-clb.jpg"'),"About background is independent from Home");
+    assert(brandedAbout.includes('class="tsnt-collage-btn" data-lightbox="assets/images/activity-800.webp"'),"About central image follows admin settings");
     assert(!(await request("/")).html.includes(secret));
     const blankPage = await request("/admin/settings.php");
     const blank = {...settingsForm,version:"2",token:field(blankPage.html,"token"),email:"",phone:"",facebook:""};
@@ -467,6 +538,54 @@ const freePort = async () => {
       assert(!html.includes('href="mailto:"') && !html.includes('href="mailto:?') && !html.includes('href="tel:"'),"Blank contact links hidden: "+route);
     }
     await db.query("update settings set email=$1,phone=$2,facebook=$3 where id='main'",[current.email,current.phone,current.facebook]);
+    const settingsData = (row,token) => {
+      const data = new FormData();
+      for (const [key,value] of Object.entries(row)) {
+        if (["gallery","created_at","updated_at"].includes(key)) continue;
+        data.append(key,String(value ?? ""));
+      }
+      data.set("token",token);
+      return data;
+    };
+    const gallerySettingsPage = await request("/admin/settings.php");
+    let gallerySettings = (await db.query("select * from settings where id='main'")).rows[0];
+    const gallerySettingsForm = settingsData(gallerySettings,field(gallerySettingsPage.html,"token"));
+    for (let index=0;index<3;index++) gallerySettingsForm.append("gallery[]",new Blob([photo],{type:"image/png"}),"site-gallery-"+index+".png");
+    assert.equal((await request("/admin/settings.php",gallerySettingsForm)).status,302);
+    gallerySettings = (await db.query("select * from settings where id='main'")).rows[0];
+    assert.equal(gallerySettings.gallery.length,3,"Website settings stores a multi-image gallery");
+    let siteGalleryHome = (await request("/")).html;
+    assert.equal((siteGalleryHome.match(/data-gallery-group="site-gallery"/g) || []).length,3,"Home page publishes the website gallery");
+    const removedSiteGalleryId = gallerySettings.gallery[1].match(/v\d+\/(.*)\.webp$/)[1];
+    const reorderPage = await request("/admin/settings.php");
+    const reorderForm = settingsData(gallerySettings,field(reorderPage.html,"token"));
+    gallerySettings.gallery.forEach((url,index) => {
+      reorderForm.append("gallery_keep[]",url);
+      reorderForm.append("gallery_position[]",String([2,3,1][index]));
+    });
+    reorderForm.append("gallery_remove[]",gallerySettings.gallery[1]);
+    assert.equal((await request("/admin/settings.php",reorderForm)).status,302);
+    gallerySettings = (await db.query("select * from settings where id='main'")).rows[0];
+    assert.equal(gallerySettings.gallery.length,2,"Website gallery supports removing images");
+    assert.equal(cloudinaryObjects.has(removedSiteGalleryId),false,"Removed website gallery image is deleted from Cloudinary");
+    siteGalleryHome = (await request("/")).html;
+    assert.equal((siteGalleryHome.match(/data-gallery-group="site-gallery"/g) || []).length,2);
+    const imageSettingsPage = await request("/admin/settings.php");
+    const imageSettingsForm = settingsData(gallerySettings,field(imageSettingsPage.html,"token"));
+    gallerySettings.gallery.forEach((url,index) => {
+      imageSettingsForm.append("gallery_keep[]",url);
+      imageSettingsForm.append("gallery_position[]",String(index+1));
+    });
+    imageSettingsForm.append("about_banner_upload",new Blob([photo],{type:"image/png"}),"about-background.png");
+    imageSettingsForm.append("about_hero_upload",new Blob([photo],{type:"image/png"}),"about-central.png");
+    assert.equal((await request("/admin/settings.php",imageSettingsForm)).status,302,"Admin uploads the two About images");
+    const uploadedSettings = (await db.query("select * from settings where id='main'")).rows[0];
+    assert(uploadedSettings.about_banner_image.includes('/clb-golf/banner/') && uploadedSettings.about_hero_image.includes('/clb-golf/hero/'),"About background and central image are stored separately");
+    assert.equal(uploadedSettings.banner_image,settingsForm.banner_image,"Uploading About background keeps Home background");
+    const uploadedAbout = (await request("/About.php")).html;
+    assert(uploadedAbout.includes(`class="about-banner-photo" src="${uploadedSettings.about_banner_image}"`));
+    assert(uploadedAbout.includes(`class="tsnt-collage-btn" data-lightbox="${uploadedSettings.about_hero_image}"`));
+    env.UI_TEST_SITE_GALLERY = "1";
     console.log("Members, sponsors, about sections and public settings binding passed");
     await db.exec("update admin_users set role='editor' where username='admin'");
     assert.equal((await request("/admin/posts.php")).status,302,"Changed account invalidates old session");
@@ -497,7 +616,7 @@ const freePort = async () => {
     }
     assert.equal(runtimeErrors,"","Node runtime errors");
     assert(operations.some(op=>op.method==="PATCH"&&op.count===0),"A stale update was rejected by PostgreSQL");
-    console.log("Supabase integration passed using local PostgreSQL and an emulated HTTP gateway; real Supabase still needs verification.");
+    console.log("Integration passed using local PostgreSQL plus emulated Supabase and Cloudinary APIs; real services still need verification.");
   } finally {
     if (web) web.kill();
     if (server) await new Promise(resolve => server.close(resolve));

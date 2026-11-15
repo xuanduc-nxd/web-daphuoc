@@ -3,6 +3,7 @@
 begin;
 
 alter table public.posts add column if not exists gallery jsonb not null default '[]'::jsonb;
+alter table public.posts add column if not exists video_uid text not null default '';
 alter table public.posts add column if not exists pinned boolean not null default false;
 alter table public.posts add column if not exists expires_on date;
 

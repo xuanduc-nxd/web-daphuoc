@@ -15,6 +15,7 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
 
   const phoneClean = String(site.phone || '').replace(/[^0-9+]/g, '');
   const heroPhoto = image(site.hero_image, 'Image/act-1.jpg');
+  const aboutHero = image(site.about_hero_image, 'Image/act-1.jpg');
 
   const pillars = [
     {
@@ -57,7 +58,8 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
   const targetEntries = [...targets.entries()];
 
   return `<main id="main-content">
-    <section class="tsnt-page-banner">
+    <section class="tsnt-page-banner about-page-banner">
+      <img class="about-banner-photo" src="${e(image(site.about_banner_image || site.banner_image, 'assets/images/hero-clb.jpg'))}" data-fallback="assets/images/hero-clb.jpg" alt="" aria-hidden="true" width="2048" height="1536">
       <div class="container">
         ${breadcrumb('Giới thiệu')}
         <div class="tsnt-banner-body">
@@ -96,8 +98,8 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
 
           <div class="tsnt-story-collage">
             <div class="tsnt-collage-main">
-              <button type="button" class="tsnt-collage-btn" data-lightbox="Image/act-1.jpg" aria-label="Xem ảnh hoạt động trao học bổng">
-                <img src="Image/act-1.jpg" srcset="${e(srcset('Image/act-1.jpg'))}" sizes="(max-width:767px) calc(100vw - 36px), 560px" width="800" height="600" alt="Hoạt động trao học bổng của CLB Golf Đa Phước">
+              <button type="button" class="tsnt-collage-btn" data-lightbox="${e(aboutHero)}" aria-label="Xem ảnh hoạt động trao học bổng">
+                <img src="${e(aboutHero)}" srcset="${e(srcset(aboutHero))}" sizes="(max-width:767px) calc(100vw - 36px), 560px" data-fallback="Image/act-1.jpg" width="800" height="600" alt="Hoạt động trao học bổng của CLB Golf Đa Phước">
                 <span class="tsnt-collage-caption">Những bước chân đồng hành cùng sinh viên Đà Nẵng</span>
               </button>
             </div>

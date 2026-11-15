@@ -105,13 +105,12 @@
   confirmation?.addEventListener("close", () => {
     pendingForm = null;
   });
-  let imageUrl = "";
+  const imageUrls = new Map();
   document.querySelectorAll("[data-image-input]").forEach((input) => {
     input.addEventListener("change", () => {
       input.setCustomValidity("");
-      const preview = input
-        .closest("form")
-        .querySelector("[data-image-preview]");
+      const preview = input.closest("label")?.querySelector("[data-image-preview]")
+        || input.closest("form")?.querySelector("[data-image-preview]");
       const error = input.closest("label").querySelector("[data-image-error]");
       const file = input.files[0];
       if (error) {
@@ -119,6 +118,8 @@
         error.hidden = true;
       }
       if (!file) {
+        if (imageUrls.has(input)) URL.revokeObjectURL(imageUrls.get(input));
+        imageUrls.delete(input);
         if (preview && preview.dataset.original) {
           preview.src = preview.dataset.original;
           preview.hidden = false;
@@ -129,9 +130,9 @@
         !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
           file.type,
         ) ||
-        file.size > 20 * 1024 * 1024
+        file.size > 10 * 1024 * 1024
       ) {
-        const message = "Chọn ảnh JPG, PNG, WebP hoặc GIF tối đa 20 MB.";
+        const message = "Chọn ảnh JPG, PNG, WebP hoặc GIF tối đa 10 MB.";
         input.setCustomValidity(message);
         if (error) {
           error.textContent = message;
@@ -140,8 +141,9 @@
         input.reportValidity();
         return;
       }
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-      imageUrl = URL.createObjectURL(file);
+      if (imageUrls.has(input)) URL.revokeObjectURL(imageUrls.get(input));
+      const imageUrl = URL.createObjectURL(file);
+      imageUrls.set(input, imageUrl);
       const removeImage = input
         .closest("form")
         .querySelector('[name="remove_image"]');
@@ -168,7 +170,7 @@
       }
     });
   window.addEventListener("pagehide", () => {
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    imageUrls.forEach((url) => URL.revokeObjectURL(url));
   });
   const editor = document.querySelector("[data-post-editor]");
   const preview = document.getElementById("post-preview-dialog");
@@ -184,9 +186,12 @@
     };
     kind?.addEventListener("change", updateKind);
     updateKind();
-    const galleryInput = editor.querySelector("[data-gallery-input]");
-    const galleryNew = editor.querySelector("[data-gallery-new]");
-    const galleryError = editor.querySelector("[data-gallery-error]");
+  }
+  document.querySelectorAll("[data-gallery-input]").forEach((galleryInput) => {
+    const galleryEditor = galleryInput.closest("form");
+    const galleryNew = galleryEditor?.querySelector("[data-gallery-new]");
+    const galleryError = galleryEditor?.querySelector("[data-gallery-error]");
+    const supportsCover = galleryInput.hasAttribute("data-gallery-cover");
     let galleryUrls = [];
     const clearGalleryPreviews = () => {
       galleryUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -196,9 +201,9 @@
     galleryInput?.addEventListener("change", () => {
       clearGalleryPreviews();
       galleryInput.setCustomValidity("");
-      galleryError.hidden = true;
+      if (galleryError) galleryError.hidden = true;
       const files = [...galleryInput.files];
-      const kept = [...editor.querySelectorAll("[data-gallery-item]")].filter(
+      const kept = [...galleryEditor.querySelectorAll("[data-gallery-item]")].filter(
         (item) => !item.querySelector('[name="gallery_remove[]"]')?.checked,
       ).length;
       if (
@@ -206,13 +211,15 @@
         files.some(
           (file) =>
             !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type) ||
-            file.size > 20 * 1024 * 1024,
+            file.size > 10 * 1024 * 1024,
         )
       ) {
-        const message = "Album tối đa 20 ảnh; mỗi ảnh là JPG, PNG, WebP hoặc GIF không quá 20 MB.";
+        const message = "Album tối đa 20 ảnh; mỗi ảnh là JPG, PNG, WebP hoặc GIF không quá 10 MB.";
         galleryInput.setCustomValidity(message);
-        galleryError.textContent = message;
-        galleryError.hidden = false;
+        if (galleryError) {
+          galleryError.textContent = message;
+          galleryError.hidden = false;
+        }
         galleryInput.reportValidity();
         return;
       }
@@ -224,20 +231,23 @@
         const img = document.createElement("img");
         img.src = url;
         img.alt = "Ảnh mới " + (index + 1);
-        const label = document.createElement("label");
-        label.className = "gallery-choice";
-        const radio = document.createElement("input");
-        radio.type = "radio";
-        radio.name = "gallery_cover";
-        radio.value = "new:" + index;
-        if (!editor.querySelector('[name="gallery_cover"]:checked')) radio.checked = true;
-        label.append(radio, " Đặt làm ảnh đại diện");
-        item.append(img, label);
+        item.append(img);
+        if (supportsCover) {
+          const label = document.createElement("label");
+          label.className = "gallery-choice";
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "gallery_cover";
+          radio.value = "new:" + index;
+          if (!galleryEditor.querySelector('[name="gallery_cover"]:checked')) radio.checked = true;
+          label.append(radio, " Đặt làm ảnh đại diện");
+          item.append(label);
+        }
         galleryNew.appendChild(item);
       });
     });
     window.addEventListener("pagehide", clearGalleryPreviews);
-  }
+  });
   document
     .querySelector("[data-post-preview]")
     ?.addEventListener("click", () => {

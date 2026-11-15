@@ -2,6 +2,7 @@ import { InputError, randomId, type Row } from '../../core/config.ts';
 import { type Form, type Session, value, checked } from '../../core/http.ts';
 import { type RouteResult } from '../../models/types.ts';
 import { members, record, remove, save } from '../../models/repository.ts';
+import { deleteManagedImages } from '../../models/cloudinary.ts';
 import { uploadedImage } from '../../services/admin.ts';
 import { teamView, teamEditView } from '../../views/admin/pages/team.view.ts';
 import { scalar, integer, flashRedirect, errorMessage, fields, view } from './helpers.ts';
@@ -17,6 +18,8 @@ export async function handleTeamList(
     type === 'student' ? 'Sinh viên' : 'Ban điều hành',
     teamView(await members(type), type, session),
     session,
+    200,
+    `team.php?type=${type}`,
   );
 }
 
@@ -59,6 +62,7 @@ export async function handleTeamEdit(
       };
 
   let error = '';
+  const uploadedThisRequest: string[] = [];
 
   if (method === 'POST') {
     if (!session.check(form, 'team')) {
@@ -109,7 +113,7 @@ export async function handleTeamEdit(
         if ([...row.role_title].length > 120) throw new InputError('Chức danh quá dài.');
         if (!Number.isInteger(row.sort_order) || row.sort_order < 0 || row.sort_order > 9999) throw new InputError('Thứ tự hiển thị không hợp lệ.');
         const uploaded = await uploadedImage(form, 'team');
-        if (uploaded) row.image = uploaded;
+        if (uploaded) { uploadedThisRequest.push(uploaded); row.image = uploaded; }
         else if (checked(form, 'remove_image')) row.image = '';
       }
 
@@ -142,8 +146,10 @@ export async function handleTeamEdit(
       }
 
       await save('members', payload, existing ? row.version : undefined);
+      if (existing?.image && existing.image !== row.image) await deleteManagedImages([existing.image]);
       return flashRedirect(session, `team.php?type=${type}`, 'Đã lưu hồ sơ.');
     } catch (failure) {
+      await deleteManagedImages(uploadedThisRequest);
       error = errorMessage(failure);
     }
   }
@@ -153,6 +159,8 @@ export async function handleTeamEdit(
     existing ? 'Sửa hồ sơ' : 'Thêm hồ sơ',
     teamEditView(row, existing, type, error, session),
     session,
+    200,
+    `team.php?type=${type}`,
   );
 }
 
@@ -172,6 +180,7 @@ export async function handleTeamDelete(
 
   try {
     await remove('members', id, integer(form, 'version'));
+    await deleteManagedImages([row.image]);
     return flashRedirect(session, `team.php?type=${row.type}`, 'Đã xóa hồ sơ.');
   } catch (failure) {
     return flashRedirect(session, `team.php?type=${row.type}`, errorMessage(failure), 'error');

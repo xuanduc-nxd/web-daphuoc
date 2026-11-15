@@ -46,7 +46,7 @@ export function srcset(value: unknown): string {
     return 'assets/images/activity-480.webp 480w, assets/images/activity-800.webp 800w, assets/images/activity-1200.webp 1200w';
   }
   if (!/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/v\d+\//.test(url)) return '';
-  return [480, 800, 1200]
+  return [480, 800, 1200, 2000]
     .map(width => `${url.replace('/image/upload/', `/image/upload/c_limit,w_${width}/q_auto/f_auto/`)} ${width}w`)
     .join(', ');
 }

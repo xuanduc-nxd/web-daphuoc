@@ -9,6 +9,7 @@ export function adminFrame(
   body: string,
   session: Session,
   flash?: SessionData['flash'],
+  section?: string,
 ): string {
   return `<!doctype html>
 <html lang="vi">
@@ -20,14 +21,14 @@ export function adminFrame(
   <link rel="stylesheet" href="../CSS/fonts.css">
   <link rel="stylesheet" href="../CSS/icons.css">
   <link rel="stylesheet" href="../CSS/site.css">
-  <link rel="stylesheet" href="admin.css?v=student-fields-1">
+  <link rel="stylesheet" href="admin.css?v=page-images-1">
   <script src="../JS/site.js" defer></script>
-  <script src="admin.js" defer></script>
+  <script src="admin.js?v=youtube-1" defer></script>
 </head>
 <body class="admin-body">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <div class="admin-shell">
-    ${renderAdminSidebar(page, session.data.admin_role)}
+    ${renderAdminSidebar(page, session.data.admin_role, section)}
     <main class="admin-main" id="main-content">
       ${renderAdminTopbar(title, session)}
       ${flash ? `<div class="flash ${e(flash.type)}" role="${flash.type === 'error' ? 'alert' : 'status'}">${e(flash.message)}</div>` : ''}

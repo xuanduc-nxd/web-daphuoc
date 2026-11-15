@@ -20,7 +20,7 @@ try {
   }
   if (missingMemberColumns.length) throw new StorageError(`Bảng members thiếu cột ${missingMemberColumns.join(', ')}. Chạy file supabase-student-fields.sql trong Supabase SQL Editor.`);
   const missingColumns: string[] = [];
-  for (const column of ['gallery','pinned','expires_on']) {
+  for (const column of ['gallery','pinned','expires_on','video_uid']) {
     const response = await supabaseRequest('GET',`/rest/v1/posts?select=${column}&limit=1`);
     if (response.ok) continue;
     let code = '';
@@ -28,7 +28,22 @@ try {
     if (response.status === 400 && ['42703','PGRST204'].includes(code)) missingColumns.push(column);
     else throw new StorageError(`Không kiểm tra được cột posts.${column} (HTTP ${response.status}).`);
   }
-  if (missingColumns.length) throw new StorageError(`Bảng posts thiếu cột ${missingColumns.join(', ')}. Chạy file supabase-posts-columns.sql trong Supabase SQL Editor.`);
+  if (missingColumns.length) throw new StorageError(`Bảng posts thiếu cột ${missingColumns.join(', ')}. Chạy file ${missingColumns.includes('video_uid') ? 'supabase-youtube-video.sql' : 'supabase-posts-columns.sql'} trong Supabase SQL Editor.`);
+  const galleryResponse = await supabaseRequest('GET','/rest/v1/settings?select=gallery&limit=1');
+  if (!galleryResponse.ok) {
+    let code = '';
+    try { const error = await galleryResponse.json() as {code?: unknown}; if (typeof error.code === 'string') code = error.code; } catch {}
+    if (galleryResponse.status === 400 && ['42703','PGRST204'].includes(code)) throw new StorageError('Bảng settings thiếu cột gallery. Chạy file supabase-site-gallery.sql trong Supabase SQL Editor.');
+    throw new StorageError(`Không kiểm tra được cột settings.gallery (HTTP ${galleryResponse.status}).`);
+  }
+  for (const column of ['banner_image','hero_image','about_banner_image','about_hero_image']) {
+    const response = await supabaseRequest('GET',`/rest/v1/settings?select=${column}&limit=1`);
+    if (response.ok) continue;
+    let code = '';
+    try { const error = await response.json() as {code?: unknown}; if (typeof error.code === 'string') code = error.code; } catch {}
+    if (response.status === 400 && ['42703','PGRST204'].includes(code)) throw new StorageError(`Bảng settings thiếu cột ${column}. Chạy file supabase-home-about-images.sql trong Supabase SQL Editor.`);
+    throw new StorageError(`Không kiểm tra được cột settings.${column} (HTTP ${response.status}).`);
+  }
   if (!await record('settings','main')) throw new StorageError('Chưa nhập cài đặt ban đầu. Chạy migrate --apply.');
   if (!(await select('admin_users',{role:'eq.admin',disabled:'eq.false'},'id.asc','id',1)).length) console.log('Chưa có quản trị viên. Chạy scripts/create-admin.ps1.');
   console.log('Đọc dữ liệu thành công. Kiểm tra thêm đăng nhập, đăng bài và tải ảnh trên website.');

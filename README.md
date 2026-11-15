@@ -4,7 +4,7 @@ Website TypeScript/Node.js, CSS và JavaScript thuần. Giao diện nền sáng,
 
 ## Dữ liệu
 
-Supabase PostgreSQL là nơi lưu nội dung khi đã cấu hình. Node.js truy cập Data API phía máy chủ; ảnh mới được lưu trong bucket công khai site-media.
+Supabase PostgreSQL lưu nội dung; ảnh mới được tối ưu và lưu trên Cloudinary bằng upload có chữ ký phía máy chủ. Supabase Storage chỉ còn chứa ảnh cũ trong thời gian chuyển đổi.
 
 - posts: Hoạt động, Thông báo, Blog; nháp/xuất bản, album tối đa 20 ảnh cho Hoạt động, ghim và ngày hết hạn cho Thông báo. Khách có thể gửi cảm nghĩ/lời cảm ơn ở Blog mà không cần đăng nhập; bài vào danh sách nháp để quản trị duyệt trước khi công khai.
 - members: Ban điều hành, cố vấn và sinh viên. Trang Hỗ trợ sinh viên chỉ công khai tên và định hướng của sinh viên, không hiển thị ảnh. Trường, ngành học, nhu cầu hỗ trợ và lĩnh vực chuyên môn chỉ hiển thị trong admin.
@@ -12,10 +12,22 @@ Supabase PostgreSQL là nơi lưu nội dung khi đã cấu hình. Node.js truy 
 - Admin có thể nhập chức danh và thứ tự hiển thị của từng thành viên; tên khóa hiện tại được đặt trong Cài đặt. Các khóa cũ được mở theo từng nhiệm kỳ trên trang công khai.
 - sponsors, about_sections, settings: tri ân, giới thiệu, thông tin liên hệ và ảnh chính trang chủ.
 - admin_users: tài khoản quản trị website, mật khẩu băm bcrypt tương thích với bản PHP cũ, quyền admin/editor. Đây là tài khoản của website, không nằm trong Supabase Auth.
+
+Với project Supabase đã có, chạy `supabase-branding-settings.sql` trong SQL Editor để bổ sung dòng chữ nhỏ, tên lớn ở đầu trang và ảnh nền ban đầu. Ảnh hoạt động tiêu biểu trong mục Về chúng tôi vẫn là trường riêng.
+
+Ảnh nền và ảnh trung tâm của trang chủ và trang Giới thiệu được quản lý riêng trong Admin → Cài đặt → Thông tin website. Với project Supabase đã có, chạy [supabase-home-about-images.sql](supabase-home-about-images.sql) trong SQL Editor trước khi lưu các ảnh mới. Khi nâng cấp, ảnh nền Giới thiệu ban đầu được giữ giống ảnh nền trang chủ đang dùng.
+
+Album trong Admin → Thông tin website lưu tối đa 20 URL ảnh trong `settings.gallery`. Ảnh được tối ưu trên Cloudinary, hiển thị công khai trên trang chủ và hỗ trợ cuộn ngang, mở lớn, nút trước/sau, phím mũi tên và vuốt trên màn hình cảm ứng. Project Supabase hiện có cần chạy [supabase-site-gallery.sql](supabase-site-gallery.sql) một lần trước khi lưu album.
+
+### Video hoạt động qua YouTube
+
+Mỗi bài Hoạt động có thể gắn một video YouTube. Tải video lên YouTube, sau đó dán link video vào biểu mẫu Admin → Bài viết → Hoạt động. Website lưu mã video trong cột `posts.video_uid` và nhúng trình phát trên trang chi tiết. Ảnh hoạt động vẫn dùng album hiện có. Với project Supabase đã có, chạy [supabase-youtube-video.sql](supabase-youtube-video.sql) một lần trong SQL Editor trước khi lưu bài có video. File có thể chạy lại an toàn.
+
+Link `youtube.com/watch`, `youtu.be`, Shorts và Live được chấp nhận. Để trống trường link rồi lưu để gỡ video khỏi bài viết. Việc gỡ link không xóa video trên YouTube. Video phải cho phép nhúng thì trình phát mới hoạt động.
 - Các thao tác cập nhật/xóa kiểm tra version để tránh ghi đè thay đổi của người khác.
 - JSON hiện có chỉ làm nguồn nhập và bản xem trước chỉ đọc trên máy cá nhân. Website không còn gọi SheetDB. Khi Supabase lỗi, website trả HTTP 503; không âm thầm đọc hoặc ghi sang JSON.
 
-Cấu hình và chuyển dữ liệu: [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Triển khai: [DEPLOYMENT.md](DEPLOYMENT.md).
+Cấu hình Supabase, Cloudinary và chuyển dữ liệu: [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Triển khai: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Chạy cục bộ
 
@@ -25,13 +37,13 @@ Cần Node.js 24+. Cài các gói và chạy máy chủ cục bộ:
 
     powershell -File scripts/start-local.ps1
 
-Mở http://127.0.0.1:8000/. Khi chưa có cấu hình Supabase, bản cục bộ chỉ xem được dữ liệu nguồn; không thể đăng nhập/lưu vào JSON. Production và Render yêu cầu cấu hình Supabase. Có thể dùng `npm start` trực tiếp; mặc định máy chủ nghe cổng 10000 hoặc giá trị `PORT`.
+Mở http://127.0.0.1:8000/. Khi chưa có cấu hình Supabase, bản cục bộ chỉ xem được dữ liệu nguồn; không thể đăng nhập/lưu vào JSON. Upload ảnh cần thêm ba biến Cloudinary trong `.env`. Production và Render yêu cầu cả Supabase và Cloudinary. Có thể dùng `npm start` trực tiếp; mặc định máy chủ nghe cổng 10000 hoặc giá trị `PORT`.
 
 ## Cấu trúc ứng dụng
 
 - `src/server.ts`: điểm vào HTTP, ánh xạ URL `.php` tương thích và phục vụ tài nguyên tĩnh.
 - `src/controllers/`: xử lý request, kiểm tra quyền, gọi model/service và chọn view. Controller công khai chỉ tải dữ liệu rồi chuyển cho view.
-- `src/models/`: repository, kết nối Supabase và dữ liệu nguồn cục bộ.
+- `src/models/`: repository, kết nối Supabase, Cloudinary và dữ liệu nguồn cục bộ.
 - `src/views/public/`, `src/views/admin/`: dựng HTML từ dữ liệu đã được controller chuẩn bị; không truy vấn Supabase.
 - `src/services/admin.ts`: xác thực quản trị và xử lý ảnh tải lên.
 - `src/core/`: cấu hình, phiên đăng nhập, biểu mẫu HTTP và quy tắc nội dung dùng chung.
@@ -45,19 +57,20 @@ Các trang công khai dùng `public/CSS/site.css`, `public/JS/site.js` và `src/
 
 Danh sách hỗ trợ tìm không dấu, lọc, sắp xếp và phân trang trên các bản ghi đã tải. API Supabase được đọc theo từng trang để không bỏ sót danh sách vượt giới hạn trả về. Blog, Hoạt động và Thông báo đều được quản lý trong admin/posts.php. Bài viết hỗ trợ xem ảnh lớn; admin có xem trước, xác nhận xóa và cảnh báo chưa lưu.
 
-Ảnh Cloudinary cũ giữ nguyên URL và sử dụng biến thể responsive theo [tài liệu Cloudinary](https://cloudinary.com/documentation/image_optimization). Ảnh Supabase Free được phục vụ từ file gốc; nên chọn ảnh có dung lượng phù hợp. Biểu mẫu Blog chỉ nhận nội dung chữ, giới hạn 3 bài mỗi giờ cho mỗi tên trên cùng địa chỉ mạng và tối đa 30 bài mỗi giờ trên một địa chỉ mạng, và cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trên project Supabase đã có. Danh sách nhà tài trợ và các gói tài trợ đang được ẩn trong lúc Ban chủ nhiệm xác nhận nội dung; xem [LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md).
+Ảnh mới được giới hạn 10 MB, chuyển sang WebP và thu nhỏ tối đa 2.400 px cho banner/hero, 2.000 px cho bài viết/album, 1.200 px cho thành viên/tài trợ. Giao diện tạo các biến thể responsive 480, 800, 1.200 và 2.000 px với `q_auto`/`f_auto`. Khi thay, gỡ hoặc xóa nội dung, các ảnh do website quản lý trong thư mục `clb-golf` cũng được xóa khỏi Cloudinary. Biểu mẫu Blog chỉ nhận nội dung chữ, giới hạn 3 bài mỗi giờ cho mỗi tên trên cùng địa chỉ mạng và tối đa 30 bài mỗi giờ trên một địa chỉ mạng, và cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trên project Supabase đã có.
 
 ## Kiểm tra
 
     npm run check
     npm run migrate -- --dry-run
+    npm run migrate:cloudinary
     npm run test:integration
 
-Kiểm thử tích hợp chạy SQL thật bằng PostgreSQL trong bộ nhớ (PGlite), giả lập HTTP Data API/Storage trên localhost và chạy Node trên cổng thử riêng. Không dùng project Supabase thật hoặc ghi vào data/ và uploads/ của dự án.
+Kiểm thử tích hợp chạy SQL thật bằng PostgreSQL trong bộ nhớ (PGlite), giả lập Supabase Data API/Storage và Cloudinary Upload API trên localhost, rồi chạy Node trên cổng thử riêng. Không dùng dịch vụ thật hoặc ghi vào data/ và uploads/ của dự án.
 
     $env:UI_PLAYWRIGHT_MODULE = (Resolve-Path node_modules/playwright-core).Path
     npm run test:integration
 
 Cần Chrome cho phần kiểm tra giao diện. Có thể dùng UI_CHROME_PATH hoặc UI_SCREENSHOT_DIR. Bài kiểm tra gồm schema, quyền truy cập, nhập lặp lại, ảnh, tài khoản, giới hạn đăng nhập, dữ liệu vượt 500 bản ghi, luồng đăng tin, version, CSRF, thu hồi quyền và giao diện desktop/mobile.
 
-Sau khi tạo project vẫn phải chạy kiểm tra kết nối, upload và các luồng trên Supabase thật; giả lập không kiểm chứng mạng, API gateway và cấu hình project bên ngoài. Thông tin liên hệ và các chương trình tài trợ cần Ban chủ nhiệm xác nhận trước khi công bố.
+Sau khi tạo project vẫn phải kiểm tra kết nối Supabase thật và upload/xóa một ảnh thử trên Cloudinary thật; giả lập không kiểm chứng mạng, API gateway hoặc cấu hình dịch vụ bên ngoài. Thông tin liên hệ và các chương trình tài trợ cần Ban chủ nhiệm xác nhận trước khi công bố.

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { ROOT, StorageError, dateValue, imageValue, type Row, type Table } from '../core/config.ts';
 
 export function defaultSettings(): Row {
-  return { id: 'main', site_name: 'CLB Golf Đa Phước', notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg', current_board_label: '' };
+  return { id: 'main', site_name: 'CLB Golf Đa Phước', header_label: 'Quỹ học bổng', header_title: 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN', banner_image: 'assets/images/hero-clb.jpg', about_banner_image: 'assets/images/hero-clb.jpg', notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg', about_hero_image: 'Image/act-1.jpg', gallery: [], current_board_label: '' };
 }
 function read(root: string, file: string): any {
   try { return JSON.parse(readFileSync(resolve(root, file), 'utf8')); }
@@ -22,7 +22,7 @@ export function legacyDatasets(root = process.env.APP_PREVIEW_DATA_DIR || resolv
       datasets.posts.push({
         id: prefix + post.id, legacy_id: prefix ? String(post.id) : null, kind, title: String(post.title).trim(),
         excerpt: String(post.excerpt || ''), content: String(post.content || ''), content_format: prefix ? 'html' : 'plain',
-        image: imageValue(post.image || ''), gallery: [], author: String(post.author || 'CLB Golf Đa Phước'), role: String(post.role || 'CLB Golf Đa Phước'),
+        image: imageValue(post.image || ''), gallery: [], video_uid: '', author: String(post.author || 'CLB Golf Đa Phước'), role: String(post.role || 'CLB Golf Đa Phước'),
         date: dateValue(String(post.date || '')), status: (post.status || (!prefix || file === 'sheets/blog.json' ? 'draft' : 'published')) === 'published' ? 'published' : 'draft',
         pinned: false, expires_on: null,
       });
@@ -47,6 +47,7 @@ export function legacyDatasets(root = process.env.APP_PREVIEW_DATA_DIR || resolv
   for (const [field,value] of Object.entries(sourceSettings)) {
     if (field in settings && field !== 'id' && typeof value === 'string' && (value || !['facebook','instagram','tiktok','threads','hero_image'].includes(field))) settings[field] = value;
   }
+  if (!Object.hasOwn(sourceSettings, 'about_banner_image')) settings.about_banner_image = settings.banner_image;
   const defaults = read(root, 'sheets/defaults.json');
   if (defaults?.[0]?.link) settings.hero_image = imageValue(String(defaults[0].link));
   datasets.settings.push(settings);

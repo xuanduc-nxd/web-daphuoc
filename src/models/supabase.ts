@@ -41,11 +41,22 @@ export async function supabaseJson(method: string, path: string, data?: Row | Ro
     if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\bcurrent_board_label\b/i.test(message)) {
       throw new StorageError('Bảng settings thiếu tên khóa hiện tại. Chạy file supabase-board-terms.sql trong Supabase SQL Editor.');
     }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(about_banner_image|about_hero_image)\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu cột ảnh trang Giới thiệu. Chạy file supabase-home-about-images.sql trong Supabase SQL Editor.');
+    }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(header_label|header_title|banner_image)\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu cột thương hiệu. Chạy file supabase-branding-settings.sql trong Supabase SQL Editor.');
+    }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\bgallery\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu cột album. Chạy file supabase-site-gallery.sql trong Supabase SQL Editor.');
+    }
     if (path.startsWith('/rest/v1/members') && ['42703','PGRST204'].includes(code) && /\b(direction|support_needs|expertise)\b/i.test(message)) {
       throw new StorageError('Bảng members thiếu cột hồ sơ sinh viên. Chạy file supabase-student-fields.sql trong Supabase SQL Editor.');
     }
     if (path.startsWith('/rest/v1/posts') && ['42703','PGRST204'].includes(code)) {
-      throw new StorageError('Bảng posts trên Supabase chưa đủ cột. Chạy file supabase-posts-columns.sql trong SQL Editor rồi thử lại.');
+      throw new StorageError(/\bvideo_uid\b/i.test(message)
+        ? 'Bảng posts thiếu cột video. Chạy file supabase-youtube-video.sql trong SQL Editor rồi thử lại.'
+        : 'Bảng posts trên Supabase chưa đủ cột. Chạy file supabase-posts-columns.sql trong SQL Editor rồi thử lại.');
     }
     throw new StorageError(response.status === 409 ? 'Dữ liệu đã tồn tại hoặc bị trùng. Vui lòng kiểm tra lại.' : 'Không kết nối được dữ liệu Supabase. Kiểm tra cấu hình và các bảng đã tạo.');
   }

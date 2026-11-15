@@ -154,7 +154,7 @@ export function teamEditView(
           </div>
           <label>Ảnh đại diện
             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input>
-            <small>JPG, PNG, WebP hoặc GIF; tối đa 20 MB.</small>
+            <small>JPG, PNG, WebP hoặc GIF; tối đa 10 MB và được tối ưu tối đa 1.200 px.</small>
             <small class="image-error" data-image-error hidden></small>
             <img class="upload-preview" data-image-preview data-original="${e(row.image ? adminImage(row.image) : '')}" src="${e(row.image ? adminImage(row.image) : '../Image/act-1.jpg')}" alt="Ảnh đại diện được chọn" ${!row.image ? 'hidden' : ''}>
           </label>

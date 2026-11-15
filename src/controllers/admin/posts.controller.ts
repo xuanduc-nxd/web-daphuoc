@@ -3,7 +3,9 @@ import { activityGallery, notificationVisible } from '../../core/content.ts';
 import { type Form, type Session, value, values, checked } from '../../core/http.ts';
 import { type RouteResult } from '../../models/types.ts';
 import { posts, record, remove, save } from '../../models/repository.ts';
+import { deleteManagedImages } from '../../models/cloudinary.ts';
 import { uploadedImage, uploadedImages } from '../../services/admin.ts';
+import { youtubeVideoId } from '../../services/youtube.ts';
 import { postsView, postEditView } from '../../views/admin/pages/posts.view.ts';
 import { scalar, integer, flashRedirect, errorMessage, fields, view } from './helpers.ts';
 
@@ -45,6 +47,7 @@ export async function handlePostEdit(
         content_format: 'plain',
         image: '',
         gallery: [],
+        video_uid: '',
         author: 'CLB Golf Đa Phước',
         role: 'CLB Golf Đa Phước',
         date: today(),
@@ -56,6 +59,8 @@ export async function handlePostEdit(
 
   let error = '';
   let removeImage = false;
+  const uploadedThisRequest: string[] = [];
+  const deleteAfterSave = new Set<string>();
 
   if (method === 'POST') {
     if (!session.check(form)) {
@@ -77,6 +82,7 @@ export async function handlePostEdit(
       post.pinned = checked(form, 'pinned');
       post.expires_on = scalar(form, 'expires_on');
     }
+    if (post.kind === 'activity') post.video_uid = scalar(form, 'youtube_url');
     post.version = integer(form, 'version');
     removeImage = Boolean(existing && checked(form, 'remove_image'));
 
@@ -101,6 +107,9 @@ export async function handlePostEdit(
       const date = adminDateValue(post.date);
 
       if (post.kind === 'activity') {
+        const videoId = post.video_uid ? youtubeVideoId(post.video_uid) : '';
+        if (post.video_uid && !videoId) throw new InputError('Liên kết YouTube không hợp lệ. Dán link video từ YouTube rồi thử lại.');
+        post.video_uid = videoId;
         const available = activityGallery(existing || {});
         const kept = values(form, 'gallery_keep[]');
         const positions = values(form, 'gallery_position[]');
@@ -128,6 +137,7 @@ export async function handlePostEdit(
           .sort((a, b) => a[1].position - b[1].position || a[1].index - b[1].index)
           .map(([urlItem]) => urlItem);
         const newImages = await uploadedImages(form, 'gallery[]', 'activity', 20 - gallery.length);
+        uploadedThisRequest.push(...newImages);
         gallery.push(...newImages);
 
         let cover = value(form, 'gallery_cover');
@@ -139,14 +149,17 @@ export async function handlePostEdit(
           : gallery.includes(existing?.image)
             ? existing!.image
             : gallery[0] || '';
+        for (const oldImage of available) if (!gallery.includes(oldImage)) deleteAfterSave.add(oldImage);
       } else {
         const uploaded = await uploadedImage(form, 'post');
         if (uploaded) {
+          uploadedThisRequest.push(uploaded);
           post.image = uploaded;
           removeImage = false;
         } else if (removeImage) {
           post.image = '';
         }
+        if (existing?.image && existing.image !== post.image) deleteAfterSave.add(existing.image);
       }
 
       if (post.kind === 'notification') {
@@ -162,6 +175,7 @@ export async function handlePostEdit(
         'content_format',
         'image',
         'gallery',
+        'video_uid',
         'author',
         'role',
         'status',
@@ -172,8 +186,10 @@ export async function handlePostEdit(
       payload.date = date;
 
       await save('posts', payload, existing ? post.version : undefined);
+      await deleteManagedImages([...deleteAfterSave]);
       return flashRedirect(session, `posts.php?kind=${post.kind}`, 'Đã lưu bài viết.');
     } catch (failure) {
+      await deleteManagedImages(uploadedThisRequest);
       error = errorMessage(failure);
       if (post.kind === 'activity') {
         post.gallery = existing?.gallery || [];
@@ -230,7 +246,11 @@ export async function handlePostDelete(
   }
 
   try {
-    await remove('posts', scalar(form, 'id'), integer(form, 'version'));
+    const id = scalar(form, 'id');
+    const post = await record('posts', id);
+    if (!post) return flashRedirect(session, 'posts.php', 'Không tìm thấy bài viết.', 'error');
+    await remove('posts', id, integer(form, 'version'));
+    await deleteManagedImages([...activityGallery(post), post.image]);
     return flashRedirect(session, 'posts.php', 'Đã xóa bài viết.');
   } catch (failure) {
     return flashRedirect(session, 'posts.php', errorMessage(failure), 'error');

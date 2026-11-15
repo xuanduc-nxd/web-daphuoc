@@ -25,6 +25,12 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       permissions: ["clipboard-read", "clipboard-write"],
     });
     const page = await context.newPage();
+    const fixtureImage = fs.readFileSync(path.join(__dirname,"../public/Image/act-1.jpg"));
+    await page.route("https://res.cloudinary.com/test-cloud/**", route => route.fulfill({
+      status: 200,
+      contentType: "image/jpeg",
+      body: fixtureImage,
+    }));
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("dialog", (dialog) => dialog.accept());
@@ -109,6 +115,21 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       "false",
     );
     console.log("Mobile navigation and keyboard passed");
+    if (process.env.UI_TEST_SITE_GALLERY) {
+      await page.goto(base + "/", {waitUntil:"networkidle"});
+      const siteGallery = page.locator(".home-site-gallery");
+      assert(await siteGallery.isVisible(),"Website gallery is visible on the home page");
+      assert.equal(await siteGallery.locator('[data-gallery-group="site-gallery"]').count(),2);
+      const siteTrack = siteGallery.locator("[data-gallery-track]");
+      assert(await siteTrack.evaluate(element => element.scrollWidth > element.clientWidth),"Website gallery can be swiped horizontally on mobile");
+      await siteGallery.locator('[data-gallery-group="site-gallery"]').first().click();
+      const firstSiteImage = await page.locator("#image-dialog-image").getAttribute("src");
+      await page.locator("#image-dialog").dispatchEvent("pointerdown",{pointerType:"touch",pointerId:11,clientX:300,clientY:300});
+      await page.locator("#image-dialog").dispatchEvent("pointerup",{pointerType:"touch",pointerId:11,clientX:100,clientY:305});
+      assert.notEqual(await page.locator("#image-dialog-image").getAttribute("src"),firstSiteImage,"Swipe changes the enlarged gallery image");
+      await page.keyboard.press("Escape");
+      console.log("Website gallery publishing and swipe navigation passed");
+    }
     await page.goto(base + "/Activities.php", { waitUntil: "networkidle" });
     const activities = await page.locator("[data-filter-item]").count();
     assert(activities > 0, "Cần có dữ liệu hoạt động thử.");
@@ -154,6 +175,10 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       await page.setViewportSize({width:1280,height:900});
       await page.goto(base + process.env.UI_TEST_GALLERY_URL, {waitUntil:"networkidle"});
       assert.equal(await page.locator('[data-gallery-group="activity"]').count(),5,"Album has cover and four more photos");
+      if (output) {
+        fs.mkdirSync(output,{recursive:true});
+        await page.locator(".article-gallery").screenshot({path:path.join(output,"album-public-desktop.png")});
+      }
       const track = page.locator("[data-gallery-track]");
       const layout = await track.evaluate(element => ({
         overflow: element.scrollWidth > element.clientWidth,
@@ -245,6 +270,13 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
         }
       }
       if (process.env.UI_TEST_GALLERY_EDIT_URL) {
+        await page.setViewportSize({width:1440,height:900});
+        await page.goto(base + process.env.UI_TEST_GALLERY_EDIT_URL,{waitUntil:"networkidle"});
+        assert.equal(await page.locator("[data-gallery-item]").count(),5);
+        if (output) {
+          fs.mkdirSync(output,{recursive:true});
+          await page.locator(".gallery-editor").first().screenshot({path:path.join(output,"album-admin-desktop.png")});
+        }
         await page.setViewportSize({width:375,height:900});
         await page.goto(base + process.env.UI_TEST_GALLERY_EDIT_URL,{waitUntil:"networkidle"});
         assert.equal(await page.locator("[data-gallery-item]").count(),5);
@@ -313,7 +345,7 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       await page.locator("[data-image-preview]").waitFor({state:"visible"});
       assert(await page.locator("[data-image-preview]").isVisible());
       await page.locator('[name="kind"]').selectOption("activity");
-      assert(await page.locator('[data-kind-section="activity"]').isVisible());
+      assert(await page.locator('[data-kind-section="activity"]').evaluateAll(elements => elements.every(element => !element.hidden)));
       await page.locator("[data-gallery-input]").setInputFiles([
         path.resolve(__dirname,"fixtures/upload.png"),
         path.resolve(__dirname,"fixtures/upload.png"),
@@ -321,7 +353,7 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       assert.equal(await page.locator(".gallery-new-item").count(),2,"Album previews selected images");
       await page.locator('[name="kind"]').selectOption("notification");
       assert(await page.locator('[data-kind-section="notification"]').isVisible());
-      assert.equal(await page.locator('[data-kind-section="activity"]').isVisible(),false);
+      assert(await page.locator('[data-kind-section="activity"]').evaluateAll(elements => elements.every(element => element.hidden)));
       await page.goto(base + "/admin/team-edit.php?type=student", {waitUntil:"networkidle"});
       assert.equal(await page.locator('[name="image"]').count(),0,"Student editor excludes photo");
       assert(await page.locator('[name="direction"]').isVisible());
@@ -342,6 +374,12 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
       await page.setViewportSize({ width: 1440, height: 1000 });
       await page.goto(base + "/", { waitUntil: "networkidle" });
       await page.screenshot({ path: path.join(output, "home-desktop.png") });
+      await page.locator(".home-hero").screenshot({path:path.join(output,"home-background.png")});
+      await page.locator(".tsnt-showcase-box").screenshot({path:path.join(output,"home-central-image.png")});
+      await page.goto(base + "/About.php", {waitUntil:"networkidle"});
+      await page.locator(".about-page-banner").screenshot({path:path.join(output,"about-background.png")});
+      await page.locator(".tsnt-story-collage").screenshot({path:path.join(output,"about-central-image.png")});
+      await page.goto(base + "/", {waitUntil:"networkidle"});
       await page.screenshot({
         path: path.join(output, "home-full.png"),
         fullPage: true,
@@ -357,6 +395,9 @@ const password = process.env.UI_TEST_ADMIN_PASSWORD || "";
           waitUntil: "networkidle",
         });
         await page.screenshot({ path: path.join(output, "admin-desktop.png") });
+        await page.goto(base + "/admin/settings.php", {waitUntil:"networkidle"});
+        await page.locator(".settings-image-grid").first().screenshot({path:path.join(output,"admin-home-images.png")});
+        await page.locator(".settings-image-grid").nth(1).screenshot({path:path.join(output,"admin-about-images.png")});
       }
     }
     assert.deepEqual(errors, [], "Lỗi JavaScript");

@@ -44,8 +44,8 @@ export function renderPublicHeader(page: string, settings: Row, article?: Row): 
       <a class="brand" href="index.php">
         <img src="assets/images/logo.webp" width="50" height="50" alt="Logo Đa Phước">
         <span>
-        <small>Và những người bạn</small>
-          <strong>${e(settings.site_name)}</strong>
+          <small>${e(settings.header_label || 'Quỹ học bổng')}</small>
+          <strong>${e(settings.header_title || 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN')}</strong>
           
         </span>
       </a>

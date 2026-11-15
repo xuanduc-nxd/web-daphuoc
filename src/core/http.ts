@@ -31,9 +31,9 @@ export async function parseForm(req: IncomingMessage): Promise<Form> {
     return { fields, files: uploads, cleanup };
   }
   if (!type.startsWith('multipart/form-data')) throw new InputError('Định dạng biểu mẫu không hợp lệ.');
-  if (Number(req.headers['content-length'] || 0) > 420 * 1024 * 1024) throw new InputError('Tổng dung lượng biểu mẫu vượt giới hạn 420 MB.');
+  if (Number(req.headers['content-length'] || 0) > 210 * 1024 * 1024) throw new InputError('Tổng dung lượng biểu mẫu vượt giới hạn 210 MB.');
   mkdirSync(uploadTemp, {recursive:true});
-  const parser = Busboy({ headers: req.headers, limits: { files: 25, fileSize: 20 * 1024 * 1024 + 1, fields: 200, fieldSize: 1024 * 1024, parts: 250 } });
+  const parser = Busboy({ headers: req.headers, limits: { files: 25, fileSize: 10 * 1024 * 1024 + 1, fields: 200, fieldSize: 1024 * 1024, parts: 250 } });
   const tasks: Promise<void>[] = [];
   let failed: Error | undefined;
   parser.on('field', (name, text, info) => { if (info.valueTruncated) failed = new InputError('Trường nội dung quá dài.'); (fields[name] ||= []).push(text); });
@@ -44,7 +44,7 @@ export async function parseForm(req: IncomingMessage): Promise<Form> {
     const upload:Upload={field:name,name:info.filename || '',mime:info.mimeType,path,size:0};
     (uploads[name] ||= []).push(upload);
     stream.on('data', chunk => { upload.size += chunk.length; });
-    // Keep the truncated 20 MB + 1 byte file so the editor can show its own validation error.
+    // Keep the truncated 10 MB + 1 byte file so the editor can show its own validation error.
     const task = pipeline(stream, createWriteStream(path));
     tasks.push(task);
   });

@@ -12,11 +12,15 @@ Mở SQL Editor → New query. Sao chép **toàn bộ** [supabase-setup.sql](sup
 
 Nếu project đã chạy website trước đây, chạy lại toàn bộ SQL này trước khi triển khai mã mới. Các lệnh `add column if not exists` bổ sung album ảnh, ghim/hết hạn thông báo, định hướng, nhu cầu hỗ trợ và lĩnh vực chuyên môn của sinh viên vào bảng hiện có mà không xóa bài hoặc hồ sơ.
 
+Để quản lý riêng ảnh nền và ảnh trung tâm của trang chủ và trang Giới thiệu trên project đã có, chạy [supabase-home-about-images.sql](supabase-home-about-images.sql) trong SQL Editor. Lệnh giữ nguyên ảnh nền trang chủ và sao chép ảnh đó sang ảnh nền Giới thiệu khi nâng cấp lần đầu.
+
 Để bật biểu mẫu gửi cảm nghĩ/lời cảm ơn trên Blog cho project đã có, chỉ cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trong SQL Editor. File tạo bảng giới hạn số lần gửi và hàm riêng cho máy chủ; bài khách gửi được lưu trong `posts` với trạng thái `draft`. Sau đó vào `/admin/posts.php?kind=blog` để xem và chọn “Hiện” hoặc mở bài để sửa trước khi xuất bản. Nếu chạy lại toàn bộ `supabase-setup.sql`, phần SQL này đã được bao gồm.
 
-Nếu trang tạo bài báo bảng `posts` thiếu cột `gallery`, `pinned` hoặc `expires_on`, có thể chạy riêng [supabase-posts-columns.sql](supabase-posts-columns.sql) trong SQL Editor. Đây là bản cập nhật tối thiểu cho bài viết hiện có; sau khi chạy, dùng `npm run check-supabase` để xác nhận cả ba cột đã tồn tại.
+Nếu trang tạo bài báo bảng `posts` thiếu cột `gallery`, `pinned` hoặc `expires_on`, có thể chạy riêng [supabase-posts-columns.sql](supabase-posts-columns.sql) trong SQL Editor. File này cũng thêm cột `video_uid`. Nếu chỉ cần gắn video YouTube trên project đã có, chạy [supabase-youtube-video.sql](supabase-youtube-video.sql). Sau đó dùng `npm run check-supabase` để xác nhận các cột.
 
 Để cập nhật riêng hồ sơ sinh viên trên project hiện có, chạy [supabase-student-fields.sql](supabase-student-fields.sql) trong SQL Editor. Lệnh bổ sung các cột `direction`, `support_needs` và `expertise` còn thiếu, giữ nguyên hồ sơ hiện có. Sau đó chạy `npm run check-supabase` để xác nhận.
+
+Để dùng album nhiều ảnh trong Admin → Thông tin website, chạy [supabase-site-gallery.sql](supabase-site-gallery.sql) một lần trong SQL Editor. File thêm `settings.gallery`, giới hạn tối đa 20 URL ảnh và có thể chạy lại an toàn.
 
 SQL tạo:
 
@@ -31,7 +35,7 @@ SQL tạo:
 | admin_login_attempts | Giới hạn thử đăng nhập |
 | public_blog_submission_attempts | Giới hạn gửi Blog công khai |
 
-Bucket site-media công khai dùng cho ảnh trên website, tối đa 20 MB/file và chỉ nhận JPG, PNG, WebP, GIF. Nếu bucket đã tồn tại với giới hạn 5 MB, chạy lại toàn bộ supabase-setup.sql để cập nhật giới hạn. Trong Supabase Storage Settings, kiểm tra Global file size limit đạt ít nhất 20 MB. Không dùng bucket này cho hồ sơ hoặc giấy tờ riêng tư.
+Bucket site-media công khai chỉ còn dùng để nhập và giữ ảnh cũ trong thời gian chuyển đổi. Ảnh quản trị tải lên mới được lưu trên Cloudinary, không ghi thêm vào Supabase Storage.
 
 Các bảng bật RLS và chỉ cấp quyền cho service_role. Người xem truy cập nội dung qua Node.js; trình duyệt không nhận secret key. Phân quyền admin/editor được kiểm tra trên máy chủ trước mỗi request quản trị. Bảng site_data cũ được giữ nguyên nếu đã tồn tại.
 
@@ -44,6 +48,8 @@ Nếu chưa có .env, sao chép .env.example thành .env; nếu đã có, sửa 
     if (!(Test-Path .env)) { Copy-Item .env.example .env }
 
 Điền SUPABASE_URL và SUPABASE_SECRET_KEY trong .env. URL có dạng https://PROJECT_REF.supabase.co, không thêm /rest/v1. Lấy URL trong Connect hoặc Integrations → Data API; lấy secret key ở Settings → API Keys. Dùng key bắt đầu bằng sb_secret_, chỉ đặt phía máy chủ. Không gửi key trong chat hoặc đưa vào Git.
+
+Tạo Cloudinary product environment rồi điền `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` và `CLOUDINARY_API_SECRET`. API secret chỉ được đặt trong `.env` cục bộ và Environment của Render; không đưa vào JavaScript trình duyệt, Git hoặc nội dung trao đổi.
 
 Giữ APP_ENV=development trên máy cá nhân. Khi triển khai đặt APP_ENV=production và APP_PREVIEW_MODE=false trong Environment của Render.
 
@@ -65,6 +71,16 @@ Script giữ id của Blog local và các hồ sơ. Bài SheetDB có id mới th
 Ảnh có đường dẫn media.php?file=... hoặc uploads/... được tải từ thư mục uploads hiện tại lên Storage và đổi URL trong bản ghi nhập. Ảnh Cloudinary/ảnh bên ngoài giữ nguyên URL. File gốc không bị chỉnh sửa hoặc xóa.
 
 Có thể dùng --source-dir và --uploads-dir để chỉ định nguồn sao lưu khác. Script dừng nếu thiếu ảnh hoặc JSON không hợp lệ. Chạy lại sẽ bỏ qua bản ghi đã có cùng id, giữ các chỉnh sửa trong database và không ghi đè ảnh cùng tên. Nếu nhập bị gián đoạn, kiểm tra lỗi rồi chạy lại; các request nhập theo lô không phải một transaction cho toàn bộ dữ liệu.
+
+Sau khi dữ liệu đã nằm trên Supabase, kiểm tra số ảnh cũ cần chuyển:
+
+    npm run migrate:cloudinary
+
+Sau khi đã sao lưu database và Storage, thực hiện chuyển URL:
+
+    npm run migrate:cloudinary -- --apply
+
+Script tải ảnh cũ từ bucket `site-media`, tối ưu chúng trên Cloudinary và cập nhật các trường ảnh/album bằng kiểm tra version. Ảnh nguồn Supabase không bị xóa tự động. Đối chiếu toàn bộ trang và sao lưu trước khi xóa chúng thủ công.
 
 Nếu bản đã triển khai có dữ liệu mới hơn file local, hãy xuất dữ liệu mới nhất trước. Script này không tự đọc bảng site_data cũ hoặc Google Sheets đang hoạt động.
 
