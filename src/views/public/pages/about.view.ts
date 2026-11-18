@@ -1,5 +1,6 @@
 import { type Row } from '../../../core/config.ts';
 import { e, icon, image, srcset, richText, breadcrumb } from '../components.ts';
+import { bannerCarousel } from '../banner-carousel.ts';
 
 export function renderAboutPage(site: Row, rows: Row[]): string {
   const group = (key: string) => rows.filter(row => row.section_key === key);
@@ -59,7 +60,7 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
 
   return `<main id="main-content">
     <section class="tsnt-page-banner about-page-banner">
-      <img class="about-banner-photo" src="${e(image(site.about_banner_image || site.banner_image, 'assets/images/hero-clb.jpg'))}" data-fallback="assets/images/hero-clb.jpg" alt="" aria-hidden="true" width="2048" height="1536">
+      ${bannerCarousel(site, site.about_banner_image || site.banner_image, 'about_banner_slides', 'assets/images/hero-clb.jpg', 'about-banner-photo')}
       <div class="container">
         ${breadcrumb('Giới thiệu')}
         <div class="tsnt-banner-body">

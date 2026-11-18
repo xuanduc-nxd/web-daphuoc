@@ -470,6 +470,8 @@
         dot.classList.toggle("is-active", active);
         dot.setAttribute("aria-current", String(active));
       });
+      const count = carousel.querySelector("[data-hero-count]");
+      if (count) count.textContent = `${index + 1} / ${slides.length}`;
     };
     carousel.querySelectorAll("[data-hero-prev]").forEach((btn) =>
       btn.addEventListener("click", (e) => {
@@ -498,4 +500,133 @@
     carousel.addEventListener("focusout", startAuto);
     startAuto();
   });
+
+  const initScrollEnhancements = () => {
+    const header = document.querySelector(".site-header");
+
+    let progressBar = null;
+    if (header) {
+      progressBar = document.createElement("div");
+      progressBar.className = "scroll-progress-bar";
+      progressBar.setAttribute("aria-hidden", "true");
+      header.appendChild(progressBar);
+    }
+
+    const backToTop = document.createElement("button");
+    backToTop.type = "button";
+    backToTop.className = "back-to-top";
+    backToTop.setAttribute("aria-label", "Cuộn lên đầu trang");
+    backToTop.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>';
+    document.body.appendChild(backToTop);
+
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+        if (header) {
+          header.classList.toggle("is-scrolled", scrollY > 15);
+        }
+        if (progressBar) {
+          const maxScroll =
+            document.documentElement.scrollHeight - window.innerHeight;
+          const progress =
+            maxScroll > 0 ? Math.min(Math.max(scrollY / maxScroll, 0), 1) : 0;
+          progressBar.style.transform = `scaleX(${progress})`;
+        }
+        backToTop.classList.toggle("is-visible", scrollY > 350);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    if (
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    const selectors = [
+      "[data-reveal]",
+      ".reveal-on-scroll",
+      ".tsnt-section-header",
+      ".section-heading",
+      ".home-section-heading",
+      ".tsnt-showcase-box",
+      ".tsnt-impact-card",
+      ".tsnt-quick-card",
+      ".tsnt-sponsor-card",
+      ".tsnt-shining-card",
+      ".news-card",
+      ".team-card",
+      ".student-card",
+      ".honor-card",
+      ".tsnt-timeline-item",
+      ".article-gallery",
+      ".article-video",
+      ".article-cover"
+    ].join(", ");
+
+    const targets = [...document.querySelectorAll(selectors)].filter(
+      (el) => !el.closest("dialog, .dialog, [hidden], template")
+    );
+
+    if (!targets.length) return;
+
+    document.documentElement.classList.add("has-scroll-reveal");
+
+    const gridSelectors =
+      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activities-grid";
+
+    targets.forEach((el) => {
+      el.classList.add("reveal-init");
+      const parentGrid = el.closest(gridSelectors);
+      if (parentGrid && !el.dataset.revealDelay) {
+        const siblings = [...parentGrid.children].filter((c) =>
+          targets.includes(c)
+        );
+        const idx = siblings.indexOf(el);
+        if (idx > 0) {
+          el.style.setProperty(
+            "--reveal-delay",
+            `${Math.min(idx * 75, 450)}ms`
+          );
+        }
+      }
+    });
+
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-revealed");
+            obs.unobserve(entry.target);
+            const cleanUp = () => {
+              entry.target.classList.remove("reveal-init", "is-revealed");
+              entry.target.style.removeProperty("--reveal-delay");
+              entry.target.removeEventListener("transitionend", cleanUp);
+            };
+            entry.target.addEventListener("transitionend", cleanUp);
+            setTimeout(cleanUp, 1000);
+          }
+        });
+      },
+      {
+        rootMargin: "0px 0px -30px 0px",
+        threshold: 0.08,
+      }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+  };
+
+  initScrollEnhancements();
 })();

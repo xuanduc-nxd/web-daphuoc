@@ -89,6 +89,8 @@ create table if not exists public.settings (
     header_title text not null default 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN',
     banner_image text not null default 'assets/images/hero-clb.jpg',
     about_banner_image text not null default 'assets/images/hero-clb.jpg',
+    banner_slides jsonb not null default '[]'::jsonb check (jsonb_typeof(banner_slides) = 'array' and jsonb_array_length(banner_slides) <= 4),
+    about_banner_slides jsonb not null default '[]'::jsonb check (jsonb_typeof(about_banner_slides) = 'array' and jsonb_array_length(about_banner_slides) <= 4),
     notice text not null default 'Đồng hành cùng thế hệ trẻ Đà Nẵng',
     contact text not null default '',
     phone text not null default '',
@@ -123,6 +125,8 @@ begin
 end;
 $$;
 alter table public.settings add column if not exists about_hero_image text not null default 'Image/act-1.jpg';
+alter table public.settings add column if not exists banner_slides jsonb not null default '[]'::jsonb;
+alter table public.settings add column if not exists about_banner_slides jsonb not null default '[]'::jsonb;
 alter table public.settings add column if not exists gallery jsonb not null default '[]'::jsonb;
 do $$
 begin

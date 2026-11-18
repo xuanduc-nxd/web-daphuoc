@@ -72,6 +72,11 @@ const freePort = async () => {
     await db.exec(pageImagesMigration);
     assert.equal((await db.query("select about_banner_image from public.settings where id='main'")).rows[0].about_banner_image,'assets/images/activity-800.webp',"About background starts with the previous shared background");
     assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name in ('about_banner_image','about_hero_image')")).rows[0].n,2,"Page image migration adds independent About fields and can be rerun");
+    await db.exec("alter table public.settings drop column banner_slides; alter table public.settings drop column about_banner_slides");
+    const bannerSlidesMigration = fs.readFileSync(path.join(root, "supabase-banner-slides.sql"), "utf8");
+    await db.exec(bannerSlidesMigration);
+    await db.exec(bannerSlidesMigration);
+    assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name in ('banner_slides','about_banner_slides')")).rows[0].n,2,"Banner slideshow migration adds both page fields and can be rerun");
     await db.exec("delete from public.settings where id='main'");
     await db.exec("alter table public.settings drop column gallery");
     const siteGalleryMigration = fs.readFileSync(path.join(root, "supabase-site-gallery.sql"), "utf8");
@@ -518,21 +523,30 @@ const freePort = async () => {
     assert((await request("/About.php")).html.includes("Phương thức kiểm thử"));
     const setting = await request("/admin/settings.php");
     const current = (await db.query("select * from settings where id='main'")).rows[0];
-    const settingsForm = {...current,token:field(setting.html,"token"),email:"clb@example.com",contact:"Liên hệ kiểm thử",header_label:"Quỹ học bổng thử",header_title:"CLB THỬ VÀ NHỮNG NGƯỜI BẠN",banner_image:"assets/images/activity-800.webp",about_banner_image:"assets/images/hero-clb.jpg",hero_image:"Image/act-1.jpg",about_hero_image:"assets/images/activity-800.webp"};
+    const settingsForm = {...current,token:field(setting.html,"token"),email:"clb@example.com",contact:"Liên hệ kiểm thử",header_label:"Quỹ học bổng thử",header_title:"CLB THỬ VÀ NHỮNG NGƯỜI BẠN",banner_image:"assets/images/activity-800.webp",about_banner_image:"assets/images/hero-clb.jpg",hero_image:"Image/act-1.jpg",about_hero_image:"assets/images/activity-800.webp","banner_slide[]":["","","",""],"about_banner_slide[]":["","","",""]};
+    const settingsFields = (row) => { const params = new URLSearchParams(); for (const [key,value] of Object.entries(row)) { if (Array.isArray(value)) value.forEach(item => params.append(key,String(item))); else params.append(key,String(value ?? "")); } return params; };
     for (const key of ["created_at","updated_at"]) delete settingsForm[key];
-    assert.equal((await request("/admin/settings.php",settingsForm)).status,302);
+    assert.equal((await request("/admin/settings.php",settingsFields(settingsForm))).status,302);
+    const staleSettingsForm = new FormData();
+    for (const [key,value] of settingsFields(settingsForm)) staleSettingsForm.append(key,value);
+    staleSettingsForm.append("banner_slide_upload_0",new Blob([photo],{type:"image/png"}),"stale-banner.png");
+    const cloudinaryCount = cloudinaryObjects.size;
+    const staleSettings = await request("/admin/settings.php",staleSettingsForm);
+    assert.equal(staleSettings.status,200);
+    assert(staleSettings.html.includes("Trang Cài đặt đã cũ"),"Stale settings report a specific conflict");
+    assert.equal(cloudinaryObjects.size,cloudinaryCount,"Stale settings do not upload the selected photo");
     assert((await request("/contact.php")).html.includes("clb@example.com"));
     const brandedHome = (await request("/")).html;
     const brandedAbout = (await request("/About.php")).html;
     assert(brandedHome.includes("Quỹ học bổng thử") && brandedHome.includes("CLB THỬ VÀ NHỮNG NGƯỜI BẠN"),"Header branding follows admin settings");
     assert(brandedHome.includes('class="tsnt-hero-bg"') && brandedHome.includes('src="assets/images/activity-800.webp"'),"Home banner follows admin settings");
     assert(brandedHome.includes('class="tsnt-showcase-media" data-lightbox="Image/act-1.jpg"'),"Home central image follows admin settings");
-    assert(brandedAbout.includes('class="about-banner-photo" src="assets/images/hero-clb.jpg"'),"About background is independent from Home");
+    assert(brandedAbout.includes('about-banner-photo" data-hero-slide fetchpriority="high" src="assets/images/hero-clb.jpg"'),"About background is independent from Home");
     assert(brandedAbout.includes('class="tsnt-collage-btn" data-lightbox="assets/images/activity-800.webp"'),"About central image follows admin settings");
     assert(!(await request("/")).html.includes(secret));
     const blankPage = await request("/admin/settings.php");
     const blank = {...settingsForm,version:"2",token:field(blankPage.html,"token"),email:"",phone:"",facebook:""};
-    assert.equal((await request("/admin/settings.php",blank)).status,302);
+    assert.equal((await request("/admin/settings.php",settingsFields(blank))).status,302);
     for (const route of ["/","/contact.php","/Blog.php"]) {
       const html = (await request(route)).html;
       assert(!html.includes('href="mailto:"') && !html.includes('href="mailto:?') && !html.includes('href="tel:"'),"Blank contact links hidden: "+route);
@@ -545,6 +559,10 @@ const freePort = async () => {
         data.append(key,String(value ?? ""));
       }
       data.set("token",token);
+      for (let index=0;index<4;index++) {
+        data.append("banner_slide[]",row.banner_slides?.[index] || "");
+        data.append("about_banner_slide[]",row.about_banner_slides?.[index] || "");
+      }
       return data;
     };
     const gallerySettingsPage = await request("/admin/settings.php");
@@ -578,12 +596,18 @@ const freePort = async () => {
     });
     imageSettingsForm.append("about_banner_upload",new Blob([photo],{type:"image/png"}),"about-background.png");
     imageSettingsForm.append("about_hero_upload",new Blob([photo],{type:"image/png"}),"about-central.png");
+    imageSettingsForm.append("banner_slide_upload_0",new Blob([photo],{type:"image/png"}),"home-slide-2.png");
+    imageSettingsForm.append("about_banner_slide_upload_0",new Blob([photo],{type:"image/png"}),"about-slide-2.png");
     assert.equal((await request("/admin/settings.php",imageSettingsForm)).status,302,"Admin uploads the two About images");
     const uploadedSettings = (await db.query("select * from settings where id='main'")).rows[0];
     assert(uploadedSettings.about_banner_image.includes('/clb-golf/banner/') && uploadedSettings.about_hero_image.includes('/clb-golf/hero/'),"About background and central image are stored separately");
     assert.equal(uploadedSettings.banner_image,settingsForm.banner_image,"Uploading About background keeps Home background");
     const uploadedAbout = (await request("/About.php")).html;
-    assert(uploadedAbout.includes(`class="about-banner-photo" src="${uploadedSettings.about_banner_image}"`));
+    assert(uploadedAbout.includes(`about-banner-photo" data-hero-slide fetchpriority="high" src="${uploadedSettings.about_banner_image}"`));
+    assert.equal(uploadedSettings.banner_slides.length,1,"Home accepts additional banner photos");
+    assert.equal(uploadedSettings.about_banner_slides.length,1,"About accepts additional banner photos");
+    assert((await request("/")).html.includes('data-hero-next'),"Home offers photo navigation");
+    assert(uploadedAbout.includes('data-hero-next'),"About offers photo navigation");
     assert(uploadedAbout.includes(`class="tsnt-collage-btn" data-lightbox="${uploadedSettings.about_hero_image}"`));
     env.UI_TEST_SITE_GALLERY = "1";
     console.log("Members, sponsors, about sections and public settings binding passed");

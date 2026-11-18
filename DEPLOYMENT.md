@@ -28,6 +28,8 @@ Tạo Web Service từ repository GitHub này, chọn nhánh chứa bản triể
 | CLOUDINARY_API_KEY | API key của Cloudinary |
 | CLOUDINARY_API_SECRET | API secret, chỉ dùng phía máy chủ |
 
+Để bật banner tối đa 5 ảnh trên Trang chủ và Giới thiệu trong cơ sở dữ liệu hiện có, chạy `supabase-banner-slides.sql` một lần trong Supabase SQL Editor trước khi lưu ảnh từ admin. Không cần chạy lại với cơ sở dữ liệu mới tạo từ `supabase-setup.sql`.
+
 Không cần SHEETDB_API_LINK, ADMIN_PASSWORD, ADMIN_PASSWORD_HASH hoặc APP_DATA_DIR. Các biến cũ có thể gỡ sau khi chuyển dữ liệu và kiểm thử thành công.
 
 Không đưa .env/secret key vào Git. Docker loại .env khỏi image; máy chủ Node chỉ phục vụ tài nguyên tĩnh trong `public/` và các URL đã khai báo. `src/`, `data/`, `uploads/`, `scripts/` và `tests/` không thể truy cập trực tiếp qua HTTP. Các script khởi tạo chỉ chạy từ CLI.

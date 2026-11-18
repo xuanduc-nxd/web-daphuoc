@@ -9,51 +9,73 @@ export function settingsView(site: Row, error: string, session: Session): string
     : [];
   const imageControl = (title: string, field: string, uploadField: string, value: string, fallback: string, help: string): string => {
     const preview = adminImage(value || fallback);
-    return `<div class="settings-image-card">
+    return `<div class="settings-image-card settings-primary-photo">
       <h3>${title}</h3>
-      <label>Đường dẫn ảnh<input name="${field}" value="${e(value)}"></label>
-      <label>Hoặc tải ảnh mới
+      <img class="upload-preview settings-banner-preview" data-image-preview data-original="${e(preview)}" src="${e(preview)}" alt="${title}">
+      <label>Chọn ảnh thay thế
         <input type="file" name="${uploadField}" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input>
         <small>${help}</small>
         <small data-image-error class="image-error" hidden></small>
-        <img class="upload-preview settings-banner-preview" data-image-preview data-original="${e(preview)}" src="${e(preview)}" alt="${title}">
       </label>
+      <details class="settings-advanced"><summary>Dùng đường dẫn ảnh</summary><label>Đường dẫn ảnh<input name="${field}" value="${e(value)}"></label></details>
     </div>`;
+  };
+  const extraSlides = (title: string, property: string, field: string, uploadField: string): string => {
+    const slides: string[] = Array.isArray(site[property]) ? site[property].slice(0, 4) : [];
+    return `<div class="banner-slide-editor" aria-label="Ảnh bổ sung ${title}"><p>Ảnh 2–5 · Có thể bỏ trống những vị trí chưa dùng.</p>
+      <div class="settings-slide-list">${Array.from({ length: 4 }, (_, index) => {
+        const url = slides[index] || '';
+        return `<div class="settings-slide-row"><div class="settings-slide-thumb">
+            <img data-image-preview data-original="${e(url ? adminImage(url) : '')}" src="${e(url ? adminImage(url) : '')}" alt="Ảnh ${index + 2} ${title}" ${url ? '' : 'hidden'}>
+            <span data-image-empty ${url ? 'hidden' : ''}>Chưa có ảnh</span>
+          </div><div class="settings-slide-fields"><strong>Ảnh ${index + 2}</strong>
+            <input type="hidden" name="${field}[]" value="${e(url)}" data-original="${e(url)}">
+            <label>Chọn ảnh<input type="file" name="${uploadField}_${index}" accept="image/jpeg,image/png,image/webp,image/gif" data-image-input><small data-image-error class="image-error" hidden></small></label>
+            ${url ? `<label class="gallery-choice"><input type="checkbox" data-banner-remove> Gỡ ảnh này</label>` : ''}
+          </div>
+        </div>`;
+      }).join('')}</div></div>`;
   };
   return `<section class="page-heading">
     <div>
       <p class="eyebrow">Cài đặt</p>
-      <h1>Thông tin website</h1>
-      <p>Điều chỉnh tên hiển thị, ảnh nền và thông tin liên hệ của website.</p>
+      <h1>Quản lý website</h1>
+      <p>Chọn ảnh hoặc sửa thông tin, sau đó bấm Lưu thay đổi.</p>
     </div>
   </section>
+  <nav class="settings-nav" aria-label="Các phần cài đặt"><a href="#settings-banners">Ảnh đầu trang</a><a href="#settings-content">Nội dung</a><a href="#settings-contact">Liên hệ</a><a href="#settings-gallery">Album</a></nav>
   ${errorBox(error)}
-  <form class="panel editor-form" method="post" enctype="multipart/form-data" data-editor>
+  <form class="panel editor-form" method="post" enctype="multipart/form-data" data-editor data-settings-form>
     ${csrf(session.token())}
     ${hidden('version', site.version)}
+    <section id="settings-banners" class="settings-block"><div class="settings-section-heading"><h2>Ảnh đầu trang</h2><p>Trang chủ và Giới thiệu có bộ ảnh riêng. Ảnh 1 luôn hiển thị đầu tiên; tối đa 5 ảnh mỗi trang.</p></div>
+      <div class="settings-page-photos"><h3>Trang chủ</h3>
+        ${imageControl('Ảnh 1 · Ảnh chính', 'banner_image', 'banner_upload', String(site.banner_image || ''), 'assets/images/hero-clb.jpg', 'Ảnh ngang, tối đa 10 MB.')}
+        ${extraSlides('Trang chủ', 'banner_slides', 'banner_slide', 'banner_slide_upload')}
+      </div>
+      <div class="settings-page-photos"><h3>Giới thiệu CLB</h3>
+        ${imageControl('Ảnh 1 · Ảnh chính', 'about_banner_image', 'about_banner_upload', String(site.about_banner_image || site.banner_image || ''), 'assets/images/hero-clb.jpg', 'Ảnh ngang, tối đa 10 MB.')}
+        ${extraSlides('Giới thiệu', 'about_banner_slides', 'about_banner_slide', 'about_banner_slide_upload')}
+      </div>
+    </section>
+    <section id="settings-content" class="settings-block"><div class="settings-section-heading"><h2>Nội dung hiển thị</h2></div>
     <label>Tên website<input name="site_name" maxlength="80" required value="${e(site.site_name)}"></label>
-    <div class="settings-section-heading"><h2>Đầu trang</h2><p>Hai dòng này hiển thị cạnh logo. Tên website phía trên vẫn dùng cho nội dung các trang khác.</p></div>
-    <label>Dòng chữ nhỏ<input name="header_label" maxlength="60" required value="${e(site.header_label)}"></label>
-    <label>Dòng chữ lớn<input name="header_title" maxlength="120" required value="${e(site.header_title)}"></label>
-    <div class="settings-section-heading"><h2>Ảnh trang chủ</h2><p>Thay riêng ảnh nền đầu trang và ảnh lớn trong mục Về chúng tôi.</p></div>
-    <div class="settings-image-grid">
-      ${imageControl('Ảnh nền trang chủ', 'banner_image', 'banner_upload', String(site.banner_image || ''), 'assets/images/hero-clb.jpg', 'Ảnh ngang, tối đa 10 MB; tự động tối ưu tối đa 2.400 px.')}
-      ${imageControl('Ảnh trung tâm trang chủ', 'hero_image', 'image', String(site.hero_image || ''), 'Image/act-1.jpg', 'Ảnh lớn trong mục Về chúng tôi; tối đa 10 MB.')}
-    </div>
-    <div class="settings-section-heading"><h2>Ảnh trang Giới thiệu</h2><p>Hai ảnh này có thể thay độc lập với trang chủ. Ảnh nhỏ bên cạnh ảnh trung tâm hiện dùng ảnh trung tâm trang chủ.</p></div>
-    <div class="settings-image-grid">
-      ${imageControl('Ảnh nền Giới thiệu', 'about_banner_image', 'about_banner_upload', String(site.about_banner_image || site.banner_image || ''), 'assets/images/hero-clb.jpg', 'Ảnh ngang ở phần đầu trang Giới thiệu; tối đa 10 MB.')}
-      ${imageControl('Ảnh trung tâm Giới thiệu', 'about_hero_image', 'about_hero_upload', String(site.about_hero_image || ''), 'Image/act-1.jpg', 'Ảnh lớn trong phần câu chuyện CLB; tối đa 10 MB.')}
-    </div>
-    <div class="settings-section-heading"><h2>Thông tin CLB</h2></div>
+    <div class="form-grid"><label>Dòng chữ nhỏ cạnh logo<input name="header_label" maxlength="60" required value="${e(site.header_label)}"></label>
+    <label>Dòng chữ lớn cạnh logo<input name="header_title" maxlength="120" required value="${e(site.header_title)}"></label></div>
     <label>Tên khóa Ban điều hành hiện tại<input name="current_board_label" maxlength="100" value="${e(site.current_board_label || '')}" placeholder="Ví dụ: Khóa 2026–2027"><small>Để trống nếu chưa xác nhận tên hoặc thời gian của khóa.</small></label>
     <label>Thông điệp của CLB<textarea name="notice" rows="2">${e(site.notice)}</textarea></label>
+    <div class="settings-image-grid">
+      ${imageControl('Ảnh hoạt động trên Trang chủ', 'hero_image', 'image', String(site.hero_image || ''), 'Image/act-1.jpg', 'Ảnh trong mục Về chúng tôi; tối đa 10 MB.')}
+      ${imageControl('Ảnh câu chuyện trên Giới thiệu', 'about_hero_image', 'about_hero_upload', String(site.about_hero_image || ''), 'Image/act-1.jpg', 'Ảnh trong phần câu chuyện CLB; tối đa 10 MB.')}
+    </div></section>
+    <section id="settings-contact" class="settings-block"><div class="settings-section-heading"><h2>Liên hệ</h2></div>
     <label>Thông tin liên hệ bổ sung<textarea name="contact" rows="3">${e(site.contact)}</textarea></label>
     <div class="form-grid">
       <label>Điện thoại<input name="phone" value="${e(site.phone)}"></label>
       <label>Email<input type="email" name="email" value="${e(site.email)}"></label>
     </div>
     <label>Khu vực hoạt động<input name="location" value="${e(site.location)}"></label>
+    <details class="settings-optional"><summary>Liên kết mạng xã hội</summary>
     <div class="form-grid">
       ${(['facebook', 'instagram', 'tiktok', 'threads'] as const)
         .map(
@@ -62,9 +84,10 @@ export function settingsView(site: Row, error: string, session: Session): string
         )
         .join('')}
     </div>
-    <section class="gallery-editor">
-      <h2>Album ảnh website</h2>
-      <p>Album hiển thị công khai trên trang chủ. Người xem có thể bấm mở ảnh, dùng nút điều hướng hoặc vuốt ngang trên điện thoại.</p>
+    </details></section>
+    <details id="settings-gallery" class="gallery-editor settings-optional">
+      <summary>Album ảnh website <span>${gallery.length} ảnh</span></summary>
+      <p>Album hiển thị ở phần dưới Trang chủ, tách biệt với ảnh đầu trang.</p>
       ${gallery
         .map(
           (url, index) => `<div class="gallery-edit-item" data-gallery-item>
@@ -84,9 +107,10 @@ export function settingsView(site: Row, error: string, session: Session): string
         <small class="image-error" data-gallery-error hidden></small>
       </label>
       <div class="gallery-new-previews" data-gallery-new></div>
-    </section>
-    <div class="editor-actions">
-      <button class="button primary" type="submit">${icon('floppy-disk')} Lưu thông tin</button>
+    </details>
+    <div class="editor-actions settings-save-bar">
+      <span>Kiểm tra ảnh xem trước rồi lưu để cập nhật website.</span>
+      <button class="button primary" type="submit">${icon('floppy-disk')} Lưu thay đổi</button>
     </div>
   </form>`;
 }

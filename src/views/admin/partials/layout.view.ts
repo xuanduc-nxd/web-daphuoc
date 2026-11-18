@@ -23,7 +23,7 @@ export function adminFrame(
   <link rel="stylesheet" href="../CSS/site.css">
   <link rel="stylesheet" href="admin.css?v=page-images-1">
   <script src="../JS/site.js" defer></script>
-  <script src="admin.js?v=youtube-1" defer></script>
+  <script src="admin.js?v=settings-flow-1" defer></script>
 </head>
 <body class="admin-body">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>

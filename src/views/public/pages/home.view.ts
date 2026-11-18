@@ -1,6 +1,7 @@
 import { type Row } from '../../../core/config.ts';
 import { type PublicPageModel } from '../../../models/types.ts';
 import { e, icon, image, srcset, dateText, strip, card, empty, postHref } from '../components.ts';
+import { bannerCarousel } from '../banner-carousel.ts';
 
 function siteGalleryView(gallery: string[]): string {
   if (!gallery.length) return '';
@@ -39,9 +40,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
 
   return `<main id="main-content">
     <section class="home-hero tsnt-hero">
-      <div class="tsnt-hero-bg" aria-hidden="true">
-        <img src="${e(image(site.banner_image, 'assets/images/hero-clb.jpg'))}" data-fallback="assets/images/hero-clb.jpg" alt="" width="2048" height="1536" fetchpriority="high">
-      </div>
+      <div class="tsnt-hero-bg">${bannerCarousel(site, site.banner_image, 'banner_slides', 'assets/images/hero-clb.jpg')}</div>
       <div class="container hero-layout">
         <div class="hero-copy">
           <div class="hero-eyebrow"><span class="eyebrow-dot"></span>CLB GOLF ĐA PHƯỚC &amp; NHỮNG NGƯỜI BẠN</div>

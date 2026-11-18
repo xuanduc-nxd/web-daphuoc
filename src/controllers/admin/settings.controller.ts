@@ -1,4 +1,4 @@
-import { InputError, imageValue } from '../../core/config.ts';
+import { ConflictError, InputError, imageValue } from '../../core/config.ts';
 import { type Form, type Session, values } from '../../core/http.ts';
 import { type RouteResult } from '../../models/types.ts';
 import { settings, save } from '../../models/repository.ts';
@@ -18,11 +18,13 @@ export async function handleSettings(
   const previousAboutBanner = site.about_banner_image;
   const previousHero = site.hero_image;
   const previousAboutHero = site.about_hero_image;
+  const previousBannerSlides = Array.isArray(site.banner_slides) ? [...site.banner_slides] : [];
+  const previousAboutBannerSlides = Array.isArray(site.about_banner_slides) ? [...site.about_banner_slides] : [];
   const previousGallery = Array.isArray(site.gallery)
     ? [...new Set(site.gallery.filter((url: unknown): url is string => typeof url === 'string' && Boolean(url)))]
     : [];
   site.gallery = previousGallery;
-  const previousImages = [previousBanner, previousAboutBanner, previousHero, previousAboutHero, ...previousGallery];
+  const previousImages = [previousBanner, previousAboutBanner, previousHero, previousAboutHero, ...previousBannerSlides, ...previousAboutBannerSlides, ...previousGallery];
   let error = '';
   const uploadedThisRequest: string[] = [];
 
@@ -31,7 +33,9 @@ export async function handleSettings(
       return flashRedirect(session, 'settings.php', 'Yêu cầu không hợp lệ.', 'error');
     }
 
-    site.version = integer(form, 'version');
+    const submittedVersion = integer(form, 'version');
+    const currentVersion = Number(site.version);
+    site.version = submittedVersion;
     for (const field of [
       'site_name',
       'header_label',
@@ -55,6 +59,9 @@ export async function handleSettings(
     }
 
     try {
+      if (submittedVersion !== currentVersion) {
+        throw new ConflictError('Trang Cài đặt đã cũ. Tải lại trang để xem thông tin mới nhất trước khi lưu.');
+      }
       if (!site.site_name || [...site.site_name].length > 80) {
         throw new InputError('Tên website cần từ 1 đến 80 ký tự.');
       }
@@ -81,6 +88,22 @@ export async function handleSettings(
       site.banner_image = imageValue(site.banner_image);
       site.about_hero_image = imageValue(site.about_hero_image);
       site.about_banner_image = imageValue(site.about_banner_image);
+      for (const [formField, property, previous, uploadField] of [
+        ['banner_slide[]', 'banner_slides', previousBannerSlides, 'banner_slide_upload'],
+        ['about_banner_slide[]', 'about_banner_slides', previousAboutBannerSlides, 'about_banner_slide_upload'],
+      ] as const) {
+        const submitted = values(form, formField);
+        if (submitted.length !== 4) throw new InputError('Danh sách ảnh đầu trang không đầy đủ.');
+        const slides: string[] = [];
+        for (let index = 0; index < 4; index++) {
+          const url = imageValue(submitted[index]);
+          if (url && !previous.includes(url)) throw new InputError('Ảnh đầu trang không hợp lệ.');
+          const upload = await uploadedImage(form, 'banner', `${uploadField}_${index}`);
+          if (upload) uploadedThisRequest.push(upload);
+          if (upload || url) slides.push(upload || url);
+        }
+        site[property] = [...new Set(slides)].slice(0, 4);
+      }
       const kept = values(form, 'gallery_keep[]');
       const positions = values(form, 'gallery_position[]');
       const removed = values(form, 'gallery_remove[]');
@@ -124,6 +147,8 @@ export async function handleSettings(
           'header_title',
           'banner_image',
           'about_banner_image',
+          'banner_slides',
+          'about_banner_slides',
           'notice',
           'contact',
           'phone',
@@ -140,7 +165,7 @@ export async function handleSettings(
         ]),
         site.version,
       );
-      const currentImages = [site.banner_image, site.about_banner_image, site.hero_image, site.about_hero_image, ...gallery];
+      const currentImages = [site.banner_image, site.about_banner_image, site.hero_image, site.about_hero_image, ...site.banner_slides, ...site.about_banner_slides, ...gallery];
       await deleteManagedImages(previousImages.filter(value => value && !currentImages.includes(value)));
       return flashRedirect(session, 'settings.php', 'Đã cập nhật thông tin website.');
     } catch (failure) {
@@ -149,6 +174,8 @@ export async function handleSettings(
       site.about_banner_image = previousAboutBanner;
       site.hero_image = previousHero;
       site.about_hero_image = previousAboutHero;
+      site.banner_slides = previousBannerSlides;
+      site.about_banner_slides = previousAboutBannerSlides;
       site.gallery = previousGallery;
       error = errorMessage(failure);
     }

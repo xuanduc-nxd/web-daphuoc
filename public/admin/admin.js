@@ -106,11 +106,28 @@
     pendingForm = null;
   });
   const imageUrls = new Map();
+  document.querySelectorAll("[data-banner-remove]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const card = checkbox.closest(".settings-slide-row");
+      const url = card?.querySelector('input[name$="_slide[]"]');
+      const preview = card?.querySelector("[data-image-preview]");
+      const empty = card?.querySelector("[data-image-empty]");
+      const input = card?.querySelector("[data-image-input]");
+      if (url) url.value = checkbox.checked ? "" : url.dataset.original || "";
+      if (checkbox.checked && input) { input.value = ""; input.setCustomValidity(""); }
+      if (preview) { preview.src = preview.dataset.original || ""; preview.hidden = checkbox.checked; }
+      if (empty) empty.hidden = !checkbox.checked;
+    });
+  });
   document.querySelectorAll("[data-image-input]").forEach((input) => {
     input.addEventListener("change", () => {
       input.setCustomValidity("");
+      const card = input.closest(".settings-slide-row, .settings-image-card");
       const preview = input.closest("label")?.querySelector("[data-image-preview]")
+        || card?.querySelector("[data-image-preview]")
         || input.closest("form")?.querySelector("[data-image-preview]");
+      const empty = card?.querySelector("[data-image-empty]");
+      const remove = card?.querySelector("[data-banner-remove]");
       const error = input.closest("label").querySelector("[data-image-error]");
       const file = input.files[0];
       if (error) {
@@ -124,6 +141,7 @@
           preview.src = preview.dataset.original;
           preview.hidden = false;
         } else if (preview) preview.hidden = true;
+        if (empty) empty.hidden = Boolean(preview?.dataset.original);
         return;
       }
       if (
@@ -144,6 +162,8 @@
       if (imageUrls.has(input)) URL.revokeObjectURL(imageUrls.get(input));
       const imageUrl = URL.createObjectURL(file);
       imageUrls.set(input, imageUrl);
+      if (remove) { remove.checked = false; const saved = card?.querySelector('input[name$="_slide[]"]'); if (saved) saved.value = saved.dataset.original || ""; }
+      if (empty) empty.hidden = true;
       const removeImage = input
         .closest("form")
         .querySelector('[name="remove_image"]');
@@ -282,6 +302,46 @@
     if (input) update();
   });
   let dirty = false;
+  document.querySelector("[data-settings-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const originalLabel = button?.innerHTML;
+    if (button) { button.disabled = true; button.textContent = "Đang lưu..."; }
+    try {
+      const response = await fetch(form.action || location.href, {
+        method: "POST", body: new FormData(form), credentials: "same-origin", redirect: "manual",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        dirty = false;
+        location.assign(response.headers.get("Location") || "settings.php");
+        return;
+      }
+      const resultPage = new DOMParser().parseFromString(await response.text(), "text/html");
+      const message = resultPage.querySelector(".flash.error")?.textContent?.trim()
+        || "Không lưu được thông tin. Vui lòng kiểm tra lại.";
+      let alert = form.previousElementSibling;
+      if (!alert?.matches(".flash.error")) {
+        alert = document.createElement("div");
+        alert.className = "flash error";
+        alert.setAttribute("role", "alert");
+        form.before(alert);
+      }
+      alert.textContent = message;
+      alert.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch {
+      let alert = form.previousElementSibling;
+      if (!alert?.matches(".flash.error")) {
+        alert = document.createElement("div");
+        alert.className = "flash error";
+        alert.setAttribute("role", "alert");
+        form.before(alert);
+      }
+      alert.textContent = "Không kết nối được máy chủ. Ảnh đã chọn vẫn còn; hãy thử lưu lại.";
+    } finally {
+      if (button) { button.disabled = false; button.innerHTML = originalLabel; }
+    }
+  });
   document.querySelectorAll("form[data-editor]").forEach((form) => {
     form.addEventListener("input", () => {
       dirty = true;
@@ -290,6 +350,7 @@
       dirty = true;
     });
     form.addEventListener("submit", () => {
+      if (form.hasAttribute("data-settings-form")) return;
       dirty = false;
       const button = form.querySelector('button[type="submit"]');
       if (button) {

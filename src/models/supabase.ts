@@ -44,6 +44,9 @@ export async function supabaseJson(method: string, path: string, data?: Row | Ro
     if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(about_banner_image|about_hero_image)\b/i.test(message)) {
       throw new StorageError('Bảng settings thiếu cột ảnh trang Giới thiệu. Chạy file supabase-home-about-images.sql trong Supabase SQL Editor.');
     }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(banner_slides|about_banner_slides)\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu cột ảnh trượt đầu trang. Chạy file supabase-banner-slides.sql trong Supabase SQL Editor.');
+    }
     if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(header_label|header_title|banner_image)\b/i.test(message)) {
       throw new StorageError('Bảng settings thiếu cột thương hiệu. Chạy file supabase-branding-settings.sql trong Supabase SQL Editor.');
     }

@@ -649,6 +649,37 @@ td small {
   max-height: 240px;
   object-fit: contain;
 }
+.settings-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.settings-nav a { padding: 9px 13px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font-size: 12px; font-weight: 600; text-decoration: none; }
+.settings-nav a:hover, .settings-nav a:focus-visible { color: var(--accent); border-color: var(--accent); }
+.settings-block, .settings-optional { scroll-margin-top: 24px; }
+.settings-block:first-of-type .settings-section-heading { border-top: 0; padding-top: 0; margin-top: 0; }
+.settings-page-photos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px 22px; margin: 0 0 28px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; }
+.settings-page-photos > h3 { grid-column: 1 / -1; margin: 0; font-size: 17px; }
+.settings-primary-photo { padding: 0; border: 0; background: none; }
+.settings-primary-photo .upload-preview { width: 100%; height: 190px; max-height: none; margin: 0 0 12px; object-fit: cover; }
+.settings-primary-photo h3 { margin-bottom: 9px; }
+.settings-primary-photo label { margin-bottom: 10px; }
+.banner-slide-editor > p { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+.settings-slide-list { display: grid; gap: 8px; }
+.settings-slide-row { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 12px; align-items: center; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 9px; }
+.settings-slide-thumb { display: grid; place-items: center; width: 108px; height: 79px; overflow: hidden; border-radius: 6px; background: var(--surface-soft); color: var(--muted); font-size: 11px; }
+.settings-slide-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.settings-slide-fields { min-width: 0; }
+.settings-slide-fields strong { display: block; font-size: 12px; margin-bottom: 4px; }
+.editor-form .settings-slide-fields label { margin: 0; font-size: 11px; }
+.editor-form .settings-slide-fields input[type="file"] { min-height: 34px; margin: 3px 0 0; padding: 3px; }
+.editor-form .settings-slide-fields .gallery-choice { margin-top: 4px; }
+.settings-advanced { margin-top: 5px; font-size: 12px; }
+.settings-advanced summary, .settings-optional summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.settings-advanced label { margin: 10px 0 0; }
+.settings-optional { margin-top: 10px; }
+.settings-optional > summary { padding: 4px 0; }
+.settings-optional[open] > summary { margin-bottom: 16px; }
+.settings-optional > summary span { color: var(--muted); font-weight: 400; }
+.settings-save-bar { position: sticky; bottom: 0; z-index: 5; justify-content: space-between; padding: 13px 0; background: white; box-shadow: 0 -9px 20px rgba(17, 52, 79, .08); }
+.settings-save-bar > span { color: var(--muted); font-size: 12px; }
+@media (max-width: 720px) { .settings-page-photos { grid-template-columns: minmax(0, 1fr); padding: 14px; } .settings-page-photos > h3 { grid-column: auto; } .settings-save-bar > span { display: none; } .settings-save-bar .button { width: 100%; justify-content: center; } }
 .image-error {
   color: var(--red) !important;
 }
