@@ -615,15 +615,14 @@
     const gridSelectors =
       ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid, .foundation-activity-grid, .foundation-student-grid, .foundation-notice-list";
 
+    const countsByGrid = new Map();
     targets.forEach((el) => {
       el.classList.add("reveal-init");
-      const parentGrid = el.closest(gridSelectors);
-      if (parentGrid && !el.dataset.revealDelay) {
-        const siblings = [...parentGrid.children].filter((c) =>
-          targets.includes(c)
-        );
-        const idx = siblings.indexOf(el);
-        if (idx > 0) {
+      const parentGrid = el.parentElement;
+      if (parentGrid?.matches(gridSelectors)) {
+        const idx = countsByGrid.get(parentGrid) || 0;
+        countsByGrid.set(parentGrid, idx + 1);
+        if (idx > 0 && !el.dataset.revealDelay) {
           el.style.setProperty(
             "--reveal-delay",
             `${Math.min(idx * 75, 450)}ms`

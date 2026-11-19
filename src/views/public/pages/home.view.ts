@@ -27,7 +27,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
           </div>
         </div>
         <div class="foundation-hero-media">
-          <img src="assets/images/scholarship-group.jpg" alt="Sinh viên và đại diện CLB Golf Đa Phước tại lễ trao học bổng" width="2048" height="1536" fetchpriority="high">
+          <img src="assets/images/scholarship-group.jpg" srcset="${srcset('assets/images/scholarship-group.jpg')}" sizes="(max-width:700px) 100vw, (max-width:1280px) 55vw, 704px" alt="Sinh viên và đại diện CLB Golf Đa Phước tại lễ trao học bổng" width="2048" height="1536" fetchpriority="high">
         </div>
       </div>
       <div class="container">
@@ -50,7 +50,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
           <a class="button secondary" href="About.php">Tìm hiểu thêm ${icon('arrow-right')}</a>
         </div>
         <div class="foundation-about-media">
-          ${video ? `<iframe src="${e(video)}" title="Video giới thiệu CLB Golf Đa Phước" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>` : `<img src="${e(aboutImage)}" srcset="${e(srcset(aboutImage))}" alt="Hoạt động trao học bổng của CLB Golf Đa Phước" width="1100" height="620" loading="lazy">`}
+          ${video ? `<iframe src="${e(video)}" title="Video giới thiệu CLB Golf Đa Phước" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>` : `<img src="${e(aboutImage)}" srcset="${e(srcset(aboutImage))}" sizes="(max-width:700px) 100vw, (max-width:1280px) 55vw, 704px" alt="Hoạt động trao học bổng của CLB Golf Đa Phước" width="1100" height="620" loading="lazy">`}
         </div>
       </div>
     </section>
@@ -59,7 +59,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
       <div class="container">
         <div class="foundation-heading"><div><h2>Hoạt động nổi bật</h2><p>Những dấu ấn trong hành trình đồng hành cùng sinh viên.</p></div><a href="Activities.php">Xem tất cả hoạt động ${icon('arrow-right')}</a></div>
         ${activities.length ? `<div class="foundation-activity-grid">${activities.slice(0, 3).map(row => `<article class="foundation-activity-card">
-          <a class="foundation-activity-image" href="${e(postHref(row))}">${row.image ? `<img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" alt="${e(row.title)}" width="640" height="420" loading="lazy">` : `<span>${icon('newspaper')}</span>`}</a>
+          <a class="foundation-activity-image" href="${e(postHref(row))}">${row.image ? `<img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" sizes="(max-width:700px) 100vw, (max-width:1280px) 33vw, 400px" alt="${e(row.title)}" width="640" height="420" loading="lazy">` : `<span>${icon('newspaper')}</span>`}</a>
           <div><span class="foundation-category">Hoạt động</span><h3><a href="${e(postHref(row))}">${e(row.title)}</a></h3><time>${e(dateText(row.date))}</time><a class="foundation-arrow" href="${e(postHref(row))}" aria-label="Xem hoạt động ${e(row.title)}">${icon('arrow-right')}</a></div>
         </article>`).join('')}</div>` : '<p class="foundation-empty">Hoạt động mới đang được cập nhật.</p>'}
       </div>

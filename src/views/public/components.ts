@@ -42,6 +42,9 @@ export function image(value: unknown, fallback = 'Image/act-1.jpg'): string {
 
 export function srcset(value: unknown): string {
   const url = image(value);
+  if (url === 'assets/images/scholarship-group.jpg') {
+    return 'assets/images/scholarship-group-800.webp 800w, assets/images/scholarship-group-1440.webp 1440w, assets/images/scholarship-group.jpg 2048w';
+  }
   if (url === 'Image/act-1.jpg') {
     return 'assets/images/activity-480.webp 480w, assets/images/activity-800.webp 800w, assets/images/activity-1200.webp 1200w';
   }

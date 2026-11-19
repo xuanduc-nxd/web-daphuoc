@@ -153,7 +153,7 @@ body.public-site .footer-navigation span { display: block; padding-block: 2px; c
 .foundation-notice.is-latest { min-height: 100px; background: #f0f7f2; border-radius: 12px; padding: 14px 8px; margin-inline: -8px; }
 .foundation-notice.is-latest strong { font-size: 16px; }
 .foundation-notice-new { display: inline-block; margin-bottom: 5px; padding: 2px 7px; border-radius: 6px; background: #086653; color: white; font-size: 10px; font-weight: 800; line-height: 1.4; letter-spacing: .05em; }
-.foundation-thanks { padding: 42px 0; background: url('../assets/images/foundation-thanks.png') center 63% / cover no-repeat; }
+.foundation-thanks { padding: 42px 0; background: url('../assets/images/foundation-thanks.webp') center 63% / cover no-repeat; }
 .foundation-thanks-panel { display: block; margin-left: 28%; padding: 26px 34px; background: rgba(255,255,255,.85); backdrop-filter: blur(12px); }
 .foundation-thanks-icon { display: none; }
 .foundation-thanks p { color: #294d41; }
@@ -174,7 +174,7 @@ body.public-site .foundation-hero + .foundation-section { padding-top: 26px; }
  .foundation-stats i { font-size: 24px; }
  .foundation-hero { padding-top: 15px; }
 }
-.foundation-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,rgba(240,247,242,.92),rgba(240,247,242,.35)),url('../assets/images/foundation-golf-hero.png') center 65% / cover no-repeat; pointer-events: none; }
+.foundation-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,rgba(240,247,242,.92),rgba(240,247,242,.35)),url('../assets/images/foundation-golf-hero.webp') center 65% / cover no-repeat; pointer-events: none; }
 body.public-site .footer-navigation { min-width: 0; overflow-wrap: anywhere; }
 body.public-site .site-header .brand strong { font-size: 14px; }
 
@@ -224,11 +224,11 @@ body.public-site {
 .public-site .page-heading-public h1 { color: #123d34; }
 .public-site .page-heading-public p { color: #65766b; }
 .public-site .activities-page .page-heading-public {
-  background: #edf4e7 url("/Image/golf-hoc-bong.png") center 72% / cover no-repeat;
+  background: #edf4e7 url("/Image/golf-hoc-bong.webp") center 72% / cover no-repeat;
 }
 @media (max-width: 767px) {
   .public-site .activities-page .page-heading-public {
-    background-image: linear-gradient(90deg, #f5f8edf2, #f5f8edab 68%, transparent), url("/Image/golf-hoc-bong.png");
+    background-image: linear-gradient(90deg, #f5f8edf2, #f5f8edab 68%, transparent), url("/Image/golf-hoc-bong.webp");
     background-position: center, right center;
   }
 }
