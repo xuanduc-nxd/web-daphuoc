@@ -1,6 +1,6 @@
 import { type Row } from '../../../core/config.ts';
 import { type PublicPageModel } from '../../../models/types.ts';
-import { e, icon, image, srcset, dateText, strip, card, empty, postHref } from '../components.ts';
+import { e, icon, image, srcset, dateText, card, empty, postHref } from '../components.ts';
 import { bannerCarousel } from '../banner-carousel.ts';
 import { youtubeEmbedUrl, youtubeVideoId } from '../../../services/youtube.ts';
 
@@ -29,7 +29,6 @@ function siteGalleryView(gallery: string[]): string {
 export function renderHomePage(site: Row, data: PublicPageModel): string {
   const { activities = [], notifications = [], sponsors = [], students = [], blogs = [] } = data;
   const recent = activities.slice(0, 4);
-  const first = recent[0];
   const heroImg = image(site.hero_image);
   const showcaseVideo = youtubeEmbedUrl(youtubeVideoId(site.showcase_video_url));
   const siteGallery = Array.isArray(site.gallery)
@@ -37,7 +36,6 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
     : [];
 
   const noticeRows = notifications.slice(0, 5);
-  const shiningStudents = students.slice(0, 3);
   const blogCards = (blogs.length ? blogs : activities).slice(0, 3);
 
   return `<main id="main-content">
@@ -102,68 +100,32 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
       </div>
     </section>
 
-    <section id="hoc-bong" class="tsnt-section bg-primary-soft">
+    <section id="hoc-bong" class="tsnt-section bg-primary-soft home-activities-section">
       <div class="container">
         <div class="tsnt-section-header-row">
           <div>
-            <h2 class="tsnt-title">Học bổng &amp; Hỗ trợ</h2>
-            <p class="tsnt-subtitle">Thông tin xét cấp học bổng, lịch trình sinh hoạt và các thông báo chính thức từ CLB</p>
+            <h2 class="tsnt-title">Hoạt động nổi bật</h2>
+            <p class="tsnt-subtitle">Những dấu mốc và hoạt động gần đây của CLB</p>
           </div>
-          <span class="tsnt-status-badge"><span class="status-dot"></span>Đang đồng hành năm học mới</span>
+          <a class="tsnt-more-link home-activities-desktop-link" href="Activities.php">Xem tất cả hoạt động ${icon('arrow-right')}</a>
         </div>
-        <div class="tsnt-scholarship-grid">
-          <div class="tsnt-notice-panel">
-            <div class="tsnt-panel-head">
-              <p class="tsnt-panel-title">${icon('megaphone')} Thông báo xét cấp &amp; sinh hoạt CLB</p>
-              <a class="tsnt-panel-link" href="Notifications.php">Xem tất cả</a>
-            </div>
-            ${
-              noticeRows.length
-                ? `<div class="tsnt-notice-list">${noticeRows
-                    .map(
-                      row => `<a class="tsnt-notice-item" href="${e(postHref(row))}">
-                  <span class="tsnt-notice-icon">${icon(row.pinned ? 'push-pin' : 'bell')}</span>
-                  <span class="tsnt-notice-text">${row.pinned ? '<strong class="tsnt-pin-tag">[GHIM]</strong> ' : ''}${e(row.title)}</span>
-                  <time class="tsnt-notice-date">${e(dateText(row.date))}</time>
-                </a>`,
-                    )
-                    .join('')}</div>`
-                : `<div class="tsnt-panel-empty"><p>Chưa có thông báo mới. Theo dõi các cập nhật tiếp theo từ Ban điều hành.</p></div>`
-            }
+        ${recent.length ? `<div class="home-activity-grid">${recent.map((row, index) => {
+          const cover = row.image ? `<img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" sizes="(max-width:767px) 84vw, (max-width:1100px) 44vw, 280px" alt="${e(row.title)}" loading="lazy" decoding="async">` : `<span class="home-activity-placeholder">${icon('golf')}</span>`;
+          return `<article class="home-activity-card" style="--activity-order:${index}"><a class="home-activity-cover" href="${e(postHref(row))}">${cover}<span class="home-activity-label">Hoạt động</span></a><div class="home-activity-body"><time>${e(dateText(row.date))}</time><h3><a href="${e(postHref(row))}">${e(row.title)}</a></h3><a class="home-activity-read" href="${e(postHref(row))}">Xem hoạt động ${icon('arrow-right')}</a></div></article>`;
+        }).join('')}</div><a class="button primary home-activities-more" href="Activities.php">Xem thêm hoạt động ${icon('arrow-right')}</a>` : `<div class="home-activities-empty"><p>Hoạt động mới đang được cập nhật.</p><a href="Activities.php">Xem trang hoạt động ${icon('arrow-right')}</a></div>`}
+      </div>
+    </section>
+
+    <section id="cong-dong" class="tsnt-section bg-primary-soft home-notifications-section">
+      <div class="container">
+        <div class="tsnt-section-header-row">
+          <div>
+            <h2 class="tsnt-title">Thông báo mới</h2>
+            <p class="tsnt-subtitle">Cập nhật lịch sinh hoạt, học bổng và thông tin chính thức từ CLB</p>
           </div>
-          <div class="tsnt-quick-cards">
-            <a class="tsnt-quick-card" href="About.php">
-              <div class="tsnt-quick-card-left">
-                <span class="tsnt-quick-icon">${icon('book-open')}</span>
-                <div>
-                  <p class="tsnt-quick-title">Giới thiệu chương trình</p>
-                  <p class="tsnt-quick-sub">Tôn chỉ, mục tiêu, giá trị &amp; đối tượng hỗ trợ</p>
-                </div>
-              </div>
-              ${icon('caret-right')}
-            </a>
-            <a class="tsnt-quick-card" href="Students.php">
-              <div class="tsnt-quick-card-left">
-                <span class="tsnt-quick-icon">${icon('graduation-cap')}</span>
-                <div>
-                  <p class="tsnt-quick-title">Sinh viên được đồng hành</p>
-                  <p class="tsnt-quick-sub">Danh sách &amp; định hướng phát triển của các em</p>
-                </div>
-              </div>
-              ${icon('caret-right')}
-            </a>
-            <a class="tsnt-quick-card tsnt-quick-card-accent" href="contact.php">
-              <div class="tsnt-quick-card-left">
-                <span class="tsnt-quick-icon">${icon('paper-plane-tilt')}</span>
-                <div>
-                  <p class="tsnt-quick-title">Kết nối &amp; Giới thiệu hồ sơ</p>
-                  <p class="tsnt-quick-sub">Liên hệ trực tiếp với Ban điều hành CLB</p>
-                </div>
-              </div>
-              ${icon('arrow-up-right')}
-            </a>
-          </div>
+          <a class="tsnt-more-link" href="Notifications.php">Xem tất cả thông báo ${icon('arrow-right')}</a>
         </div>
+        ${noticeRows.length ? `<div class="home-activity-grid home-notice-grid">${noticeRows.slice(0, 4).map((row, index) => `<article class="home-activity-card" style="--activity-order:${index}"><a class="home-activity-cover" href="${e(postHref(row))}">${row.image ? `<img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" sizes="(max-width:767px) 84vw, (max-width:1100px) 44vw, 280px" alt="${e(row.title)}" loading="lazy" decoding="async">` : `<span class="home-activity-placeholder">${icon('bell-ringing')}</span>`}<span class="home-activity-label">${row.pinned ? 'Thông báo ghim' : 'Thông báo CLB'}</span></a><div class="home-activity-body"><time>${e(dateText(row.date))}</time><h3><a href="${e(postHref(row))}">${e(row.title)}</a></h3><a class="home-activity-read" href="${e(postHref(row))}">Đọc thông báo ${icon('arrow-right')}</a></div></article>`).join('')}</div>` : `<div class="home-activities-empty"><p>Chưa có thông báo mới.</p><a href="Notifications.php">Xem trang thông báo ${icon('arrow-right')}</a></div>`}
       </div>
     </section>
 
@@ -193,134 +155,27 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
       </div>
     </section>
 
-    <section id="cong-dong" class="tsnt-section bg-primary-soft">
-      <div class="container">
-        <div class="tsnt-section-header-row">
-          <div>
-            <h2 class="tsnt-title">Cộng đồng CLB Đa Phước</h2>
-            <p class="tsnt-subtitle">Mạng lưới gắn kết không chỉ là những suất học bổng, mà là cả hành trình đồng hành lâu dài cùng sinh viên Đà Nẵng.</p>
-          </div>
-          <a class="tsnt-more-link" href="Activities.php">Xem tất cả hoạt động ${icon('arrow-right')}</a>
-        </div>
-        ${
-          first
-            ? `<div class="tsnt-community-bento">
-          <a class="tsnt-bento-featured" href="${e(postHref(first))}">
-            <img src="${e(image(first.image))}" srcset="${e(srcset(first.image))}" sizes="(max-width:767px) calc(100vw - 36px), 720px" data-fallback="assets/images/activity-800.webp" alt="${e(first.title)}" width="900" height="600" loading="lazy">
-            <div class="tsnt-bento-gradient"></div>
-            <div class="tsnt-bento-content">
-              <span class="tsnt-bento-badge">Cộng đồng Đà Nẵng</span>
-              <h3>${e(first.title)}</h3>
-              <p>${e(strip(first.excerpt))}</p>
-              <div class="tsnt-bento-meta">${icon('calendar-blank')} <span>${e(dateText(first.date))}</span></div>
-            </div>
-          </a>
-          <div class="tsnt-bento-side">
-            ${
-              recent.slice(1, 4).length
-                ? recent
-                    .slice(1, 4)
-                    .map(
-                      row => `<a class="tsnt-bento-item" href="${e(postHref(row))}">
-                <div class="tsnt-bento-thumb"><img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" sizes="120px" data-fallback="assets/images/activity-480.webp" alt="${e(row.title)}" width="240" height="180" loading="lazy"></div>
-                <div class="tsnt-bento-info">
-                  <span class="tsnt-mini-tag">Hoạt động CLB</span>
-                  <h4>${e(row.title)}</h4>
-                  <span class="tsnt-mini-date">${icon('calendar-blank')} ${e(dateText(row.date))}</span>
-                </div>
-              </a>`,
-                    )
-                    .join('')
-                : `<div class="tsnt-bento-cta-box"><h3>Lan tỏa tinh thần sẻ chia</h3><p>Cùng theo dõi các hoạt động giao lưu thể thao và trao học bổng của CLB Golf Đa Phước.</p><a class="button primary" href="Activities.php">Khám phá thêm ${icon('arrow-right')}</a></div>`
-            }
-          </div>
-        </div>`
-            : empty('Hoạt động đang được cập nhật', 'Bạn có thể xem các thông báo hoặc tìm hiểu thêm về CLB.')
-        }
-      </div>
-    </section>
-
     <section id="hoat-dong" class="tsnt-section bg-white">
       <div class="container">
-        <div class="tsnt-section-header">
-          <h2 class="tsnt-title">Hoạt động</h2>
-          <p class="tsnt-subtitle">Những gì đang diễn ra trong cộng đồng ${e(site.site_name)} và những người bạn</p>
-        </div>
-
         <div class="tsnt-activity-blocks">
-          <div class="tsnt-dual-boxes">
-            <div class="tsnt-feed-box tsnt-feed-narrow">
-              <div class="tsnt-feed-head">
-                <span>${icon('bell-ringing')} Thông báo từ BĐH</span>
-                <a href="Notifications.php">Xem tất cả</a>
+          <section class="shining-panel" aria-labelledby="shining-title">
+            <header class="shining-heading">
+              <span class="shining-icon" aria-hidden="true">${icon('graduation-cap')}</span>
+              <div><h3 id="shining-title">Gương mặt Sinh viên</h3><p>We're Shining · Cộng đồng Sinh viên Đà Nẵng</p></div>
+              <a class="shining-more" href="Students.php">Xem thêm <span aria-hidden="true">→</span></a>
+            </header>
+            ${students.length ? `<div class="shining-slider" data-shining-slider>
+              <div class="shining-track" data-gallery-track>${students.map(st => `<a class="shining-card" href="Students.php">
+                <span class="shining-initial" aria-hidden="true">${e(String(st.name || 'S').trim().slice(0, 1).toUpperCase())}</span>
+                <div class="shining-details"><strong>${e(st.name)}</strong><p>${e(st.direction || 'Định hướng đang được cập nhật.')}</p></div>
+                <span class="shining-open" aria-hidden="true">↗</span>
+              </a>`).join('')}</div>
+              <div class="article-gallery-controls" hidden>
+                <button type="button" data-gallery-scroll-previous aria-label="Sinh viên trước">‹</button>
+                <button type="button" data-gallery-scroll-next aria-label="Sinh viên tiếp theo">›</button>
               </div>
-              <div class="tsnt-feed-list">
-                ${
-                  noticeRows.length
-                    ? noticeRows
-                        .map(
-                          row => `<a class="tsnt-feed-row-compact" href="${e(postHref(row))}">
-                    <span class="tsnt-feed-mini-icon">${icon('file-text')}</span>
-                    <p>${e(row.title)}</p>
-                    <time>${e(dateText(row.date))}</time>
-                  </a>`,
-                        )
-                        .join('')
-                    : `<p class="tsnt-empty-inline">Chưa có thông báo mới.</p>`
-                }
-              </div>
-            </div>
-
-            <div class="tsnt-feed-box tsnt-feed-wide">
-              <div class="tsnt-feed-head">
-                <span>${icon('newspaper')} Tin tức mới nhất</span>
-                <a href="Activities.php">Xem tất cả</a>
-              </div>
-              <div class="tsnt-feed-list">
-                ${
-                  recent.length
-                    ? recent
-                        .slice(0, 3)
-                        .map(
-                          row => `<a class="tsnt-feed-row-media" href="${e(postHref(row))}">
-                    <div class="tsnt-feed-thumb"><img src="${e(image(row.image))}" srcset="${e(srcset(row.image))}" sizes="80px" data-fallback="assets/images/activity-480.webp" alt="${e(row.title)}" width="160" height="160" loading="lazy"></div>
-                    <div class="tsnt-feed-body">
-                      <span class="tsnt-feed-tag">TIN CLB</span>
-                      <h4>${e(row.title)}</h4>
-                      <time>${icon('calendar-blank')} ${e(dateText(row.date))}</time>
-                    </div>
-                  </a>`,
-                        )
-                        .join('')
-                    : `<p class="tsnt-empty-inline">Chưa có bài viết hoạt động mới.</p>`
-                }
-              </div>
-            </div>
-          </div>
-
-          <div class="tsnt-subblock">
-            <div class="tsnt-subblock-head">
-              <h3>${icon('sparkle')} We're Shining · Gương mặt Sinh viên</h3>
-              <a href="Students.php">Xem tất cả ${icon('arrow-right')}</a>
-            </div>
-            ${
-              shiningStudents.length
-                ? `<div class="tsnt-shining-grid">${shiningStudents
-                    .map(st => {
-                      const init = String(st.name || 'S').trim().slice(0, 1).toUpperCase();
-                      return `<a class="tsnt-shining-card" href="Students.php">
-                  <div class="tsnt-shining-avatar" aria-hidden="true">${e(init)}</div>
-                  <div class="tsnt-shining-copy">
-                    <div class="tsnt-shining-name">${e(st.name)}</div>
-                    <div class="tsnt-shining-region">Cộng đồng Sinh viên Đà Nẵng</div>
-                    <p class="tsnt-shining-quote">&ldquo;${e(st.direction || 'Nỗ lực học tập và rèn luyện để vươn tới ước mơ.')}&rdquo;</p>
-                  </div>
-                </a>`;
-                    })
-                    .join('')}</div>`
-                : `<p class="tsnt-empty-inline">Danh sách gương mặt sinh viên đang được cập nhật.</p>`
-            }
-          </div>
+            </div>` : '<p class="tsnt-empty-inline">Danh sách gương mặt sinh viên đang được cập nhật.</p>'}
+          </section>
 
           <div class="tsnt-subblock">
             <div class="tsnt-subblock-head">

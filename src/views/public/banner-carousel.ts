@@ -2,7 +2,7 @@ import { type Row } from '../../core/config.ts';
 import { e, icon, image } from './components.ts';
 
 export function bannerCarousel(site: Row, primary: string, extraField: string, fallback: string, photoClass = ''): string {
-  const extras = Array.isArray(site[extraField]) ? site[extraField].filter((url: unknown): url is string => typeof url === 'string' && Boolean(url)).slice(0, 4) : [];
+  const extras = Array.isArray(site[extraField]) ? site[extraField].filter((url: unknown): url is string => typeof url === 'string' && Boolean(url)).slice(0, 5) : [];
   const slides = [image(primary, fallback), ...extras.map(url => image(url))];
   return `<div class="banner-slides" data-hero-carousel aria-label="Ảnh đầu trang">
     ${slides.map((url, index) => `<img class="banner-slide ${photoClass}" data-hero-slide ${index ? 'hidden loading="lazy"' : 'fetchpriority="high"'} src="${e(url)}" data-fallback="${fallback}" alt="" aria-hidden="true" width="2048" height="1536">`).join('')}

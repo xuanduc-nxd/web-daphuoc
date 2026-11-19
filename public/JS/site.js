@@ -298,7 +298,7 @@
       render(false);
     });
   });
-  document.querySelectorAll("[data-article-gallery]").forEach((gallery) => {
+  document.querySelectorAll("[data-article-gallery], [data-shining-slider]").forEach((gallery) => {
     const track = gallery.querySelector("[data-gallery-track]");
     const controls = gallery.querySelector(".article-gallery-controls");
     const previous = gallery.querySelector("[data-gallery-scroll-previous]");
@@ -311,7 +311,7 @@
       next.disabled = track.scrollLeft >= limit - 1;
     };
     const move = (direction) => {
-      const item = track.querySelector("button");
+      const item = track.firstElementChild;
       const gap = parseFloat(getComputedStyle(track).gap) || 0;
       track.scrollBy({
         left: direction * ((item?.getBoundingClientRect().width || track.clientWidth) + gap),
@@ -571,10 +571,13 @@
       "[data-reveal]",
       ".reveal-on-scroll",
       ".tsnt-section-header",
+      ".tsnt-section-header-row",
       ".section-heading",
       ".home-section-heading",
       ".tsnt-showcase-box",
       ".tsnt-impact-card",
+      ".home-activity-card",
+      ".home-activities-empty",
       ".tsnt-quick-card",
       ".tsnt-sponsor-card",
       ".tsnt-shining-card",
@@ -597,7 +600,7 @@
     document.documentElement.classList.add("has-scroll-reveal");
 
     const gridSelectors =
-      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activities-grid";
+      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid";
 
     targets.forEach((el) => {
       el.classList.add("reveal-init");
