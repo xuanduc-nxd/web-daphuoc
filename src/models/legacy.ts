@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { ROOT, StorageError, dateValue, imageValue, type Row, type Table } from '../core/config.ts';
 
 export function defaultSettings(): Row {
-  return { id: 'main', site_name: 'CLB Golf Đa Phước', header_label: 'Quỹ học bổng', header_title: 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN', banner_image: 'assets/images/hero-clb.jpg', about_banner_image: 'assets/images/hero-clb.jpg', banner_slides: [], about_banner_slides: [], notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg', about_hero_image: 'Image/act-1.jpg', gallery: [], current_board_label: '' };
+  return { id: 'main', site_name: 'CLB Golf Đa Phước', header_label: 'Quỹ học bổng', header_title: 'CLB GOLF ĐA PHƯỚC VÀ NHỮNG NGƯỜI BẠN', banner_image: 'assets/images/hero-clb.jpg', about_banner_image: 'assets/images/hero-clb.jpg', banner_slides: [], about_banner_slides: [], notice: 'Đồng hành cùng thế hệ trẻ Đà Nẵng', contact: '', phone: '', email: '', location: 'Đà Nẵng, Việt Nam', facebook: '', instagram: '', tiktok: '', threads: '', hero_image: 'Image/act-1.jpg', about_hero_image: 'Image/act-1.jpg', showcase_video_url: '', gallery: [], current_board_label: '' };
 }
 function read(root: string, file: string): any {
   try { return JSON.parse(readFileSync(resolve(root, file), 'utf8')); }

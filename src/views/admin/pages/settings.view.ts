@@ -65,7 +65,7 @@ export function settingsView(site: Row, error: string, session: Session): string
     <label>Tên khóa Ban điều hành hiện tại<input name="current_board_label" maxlength="100" value="${e(site.current_board_label || '')}" placeholder="Ví dụ: Khóa 2026–2027"><small>Để trống nếu chưa xác nhận tên hoặc thời gian của khóa.</small></label>
     <label>Thông điệp của CLB<textarea name="notice" rows="2">${e(site.notice)}</textarea></label>
     <div class="settings-image-grid">
-      ${imageControl('Ảnh hoạt động trên Trang chủ', 'hero_image', 'image', String(site.hero_image || ''), 'Image/act-1.jpg', 'Ảnh trong mục Về chúng tôi; tối đa 10 MB.')}
+      <div><label>Video hoạt động trên Trang chủ · YouTube<input type="url" name="showcase_video_url" value="${e(site.showcase_video_url || '')}" placeholder="https://www.youtube.com/watch?v=..." inputmode="url"><small>Dán liên kết video YouTube. Để trống để tiếp tục dùng ảnh bên dưới.</small></label>${imageControl('Ảnh hoạt động trên Trang chủ', 'hero_image', 'image', String(site.hero_image || ''), 'Image/act-1.jpg', 'Ảnh dự phòng khi chưa thêm video.')}</div>
       ${imageControl('Ảnh câu chuyện trên Giới thiệu', 'about_hero_image', 'about_hero_upload', String(site.about_hero_image || ''), 'Image/act-1.jpg', 'Ảnh trong phần câu chuyện CLB; tối đa 10 MB.')}
     </div></section>
     <section id="settings-contact" class="settings-block"><div class="settings-section-heading"><h2>Liên hệ</h2></div>

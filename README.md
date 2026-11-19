@@ -24,6 +24,8 @@ Album trong Admin → Thông tin website lưu tối đa 20 URL ảnh trong `sett
 Mỗi bài Hoạt động có thể gắn một video YouTube. Tải video lên YouTube, sau đó dán link video vào biểu mẫu Admin → Bài viết → Hoạt động. Website lưu mã video trong cột `posts.video_uid` và nhúng trình phát trên trang chi tiết. Ảnh hoạt động vẫn dùng album hiện có. Với project Supabase đã có, chạy [supabase-youtube-video.sql](supabase-youtube-video.sql) một lần trong SQL Editor trước khi lưu bài có video. File có thể chạy lại an toàn.
 
 Link `youtube.com/watch`, `youtu.be`, Shorts và Live được chấp nhận. Để trống trường link rồi lưu để gỡ video khỏi bài viết. Việc gỡ link không xóa video trên YouTube. Video phải cho phép nhúng thì trình phát mới hoạt động.
+
+Ảnh đầu trang chủ có thể có tối đa 4 ảnh bổ sung. Nếu dùng video YouTube ở khu vực hoạt động tiêu biểu trên trang chủ, project Supabase hiện có cần chạy [supabase-showcase-video.sql](supabase-showcase-video.sql) một lần trong SQL Editor để thêm cột `settings.showcase_video_url`.
 - Các thao tác cập nhật/xóa kiểm tra version để tránh ghi đè thay đổi của người khác.
 - JSON hiện có chỉ làm nguồn nhập và bản xem trước chỉ đọc trên máy cá nhân. Website không còn gọi SheetDB. Khi Supabase lỗi, website trả HTTP 503; không âm thầm đọc hoặc ghi sang JSON.
 

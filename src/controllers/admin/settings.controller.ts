@@ -5,6 +5,7 @@ import { settings, save } from '../../models/repository.ts';
 import { deleteManagedImages } from '../../models/cloudinary.ts';
 import { uploadedImage, uploadedImages } from '../../services/admin.ts';
 import { settingsView } from '../../views/admin/pages/settings.view.ts';
+import { youtubeVideoId } from '../../services/youtube.ts';
 import { scalar, integer, flashRedirect, errorMessage, fields, view } from './helpers.ts';
 
 export async function handleSettings(
@@ -53,6 +54,7 @@ export async function handleSettings(
       'threads',
       'hero_image',
       'about_hero_image',
+      'showcase_video_url',
       'current_board_label',
     ]) {
       site[field] = scalar(form, field);
@@ -75,6 +77,7 @@ export async function handleSettings(
       if (site.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(site.email)) {
         throw new InputError('Email không hợp lệ.');
       }
+      if (site.showcase_video_url && !youtubeVideoId(site.showcase_video_url)) throw new InputError('Liên kết video YouTube không hợp lệ.');
       if (site.phone && !/^[0-9+(). \-]{6,30}$/.test(site.phone)) {
         throw new InputError('Số điện thoại không hợp lệ.');
       }
@@ -160,6 +163,7 @@ export async function handleSettings(
           'threads',
           'hero_image',
           'about_hero_image',
+          'showcase_video_url',
           'gallery',
           'current_board_label',
         ]),

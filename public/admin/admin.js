@@ -319,7 +319,8 @@
       }
       const resultPage = new DOMParser().parseFromString(await response.text(), "text/html");
       const message = resultPage.querySelector(".flash.error")?.textContent?.trim()
-        || "Không lưu được thông tin. Vui lòng kiểm tra lại.";
+        || resultPage.querySelector("main")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 400)
+        || `Không lưu được thông tin (HTTP ${response.status}). Vui lòng kiểm tra lại.`;
       let alert = form.previousElementSibling;
       if (!alert?.matches(".flash.error")) {
         alert = document.createElement("div");

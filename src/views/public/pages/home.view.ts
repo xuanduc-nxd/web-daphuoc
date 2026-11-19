@@ -2,6 +2,7 @@ import { type Row } from '../../../core/config.ts';
 import { type PublicPageModel } from '../../../models/types.ts';
 import { e, icon, image, srcset, dateText, strip, card, empty, postHref } from '../components.ts';
 import { bannerCarousel } from '../banner-carousel.ts';
+import { youtubeEmbedUrl, youtubeVideoId } from '../../../services/youtube.ts';
 
 function siteGalleryView(gallery: string[]): string {
   if (!gallery.length) return '';
@@ -30,6 +31,7 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
   const recent = activities.slice(0, 4);
   const first = recent[0];
   const heroImg = image(site.hero_image);
+  const showcaseVideo = youtubeEmbedUrl(youtubeVideoId(site.showcase_video_url));
   const siteGallery = Array.isArray(site.gallery)
     ? [...new Set(site.gallery.filter((url: unknown): url is string => typeof url === 'string' && Boolean(url)))]
     : [];
@@ -64,13 +66,12 @@ export function renderHomePage(site: Row, data: PublicPageModel): string {
           <p class="tsnt-subtitle">Sứ mệnh, hành trình gắn kết đam mê thể thao và cam kết minh bạch đồng hành cùng sinh viên Đà Nẵng</p>
         </div>
         <div class="tsnt-showcase-box">
-          <button type="button" class="tsnt-showcase-media" data-lightbox="${e(heroImg)}" aria-label="Xem ảnh hoạt động tiêu biểu của CLB Golf Đa Phước">
+          ${showcaseVideo ? `<div class="tsnt-showcase-media"><iframe src="${e(showcaseVideo)}" title="Video hoạt động của CLB Golf Đa Phước" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : `<div class="tsnt-showcase-media">
             <img src="${e(heroImg)}" srcset="${e(srcset(heroImg))}" sizes="(max-width:767px) calc(100vw - 36px), 896px" data-fallback="assets/images/activity-800.webp" alt="Hoạt động trao học bổng của CLB Golf Đa Phước và những người bạn" width="1100" height="620" loading="lazy">
             <span class="tsnt-showcase-overlay">
-              <span class="tsnt-play-badge">${icon('arrows-out')}</span>
               <span class="tsnt-showcase-caption">Khoảnh khắc trao học bổng &amp; đồng hành cùng sinh viên Đại học Đà Nẵng</span>
             </span>
-          </button>
+          </div>`}
         </div>
         ${siteGalleryView(siteGallery)}
         <div class="tsnt-impact-wrap">

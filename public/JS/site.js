@@ -488,6 +488,19 @@
     dots.forEach((dot, idx) =>
       dot.addEventListener("click", () => show(idx)),
     );
+    let touchStartX = null;
+    carousel.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "touch") return;
+      touchStartX = event.clientX;
+    }, { passive: true });
+    carousel.addEventListener("pointerup", (event) => {
+      if (touchStartX === null || event.pointerType !== "touch") return;
+      const distance = event.clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(distance) < 45) return;
+      show(index + (distance < 0 ? 1 : -1));
+    }, { passive: true });
+    carousel.addEventListener("pointercancel", () => { touchStartX = null; }, { passive: true });
     const startAuto = () => {
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       clearInterval(timer);

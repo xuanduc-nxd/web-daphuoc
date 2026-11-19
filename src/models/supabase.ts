@@ -50,6 +50,9 @@ export async function supabaseJson(method: string, path: string, data?: Row | Ro
     if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\b(header_label|header_title|banner_image)\b/i.test(message)) {
       throw new StorageError('Bảng settings thiếu cột thương hiệu. Chạy file supabase-branding-settings.sql trong Supabase SQL Editor.');
     }
+    if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\bshowcase_video_url\b/i.test(message)) {
+      throw new StorageError('Bảng settings thiếu cột video trang chủ. Chạy file supabase-showcase-video.sql trong Supabase SQL Editor.');
+    }
     if (path.startsWith('/rest/v1/settings') && ['42703','PGRST204'].includes(code) && /\bgallery\b/i.test(message)) {
       throw new StorageError('Bảng settings thiếu cột album. Chạy file supabase-site-gallery.sql trong Supabase SQL Editor.');
     }
