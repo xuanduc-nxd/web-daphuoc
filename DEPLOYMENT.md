@@ -23,6 +23,7 @@ Tạo Web Service từ repository GitHub này, chọn nhánh chứa bản triể
 | APP_ENV | production |
 | APP_PREVIEW_MODE | false |
 | SUPABASE_URL | URL project Supabase |
+| PUBLIC_SITE_URL | Địa chỉ công khai dùng cho thẻ chia sẻ bài viết và ảnh bìa. Mặc định là https://web-daphuoc.vercel.app. |
 | SUPABASE_SECRET_KEY | Secret key dùng riêng cho backend Node.js |
 | CLOUDINARY_CLOUD_NAME | Cloud name trong Cloudinary Console |
 | CLOUDINARY_API_KEY | API key của Cloudinary |

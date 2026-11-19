@@ -143,7 +143,8 @@ export function renderDetailPage(
   return {
     status: 200,
     title: `${article.title} · CLB Golf Đa Phước`,
-    description: strip(article.excerpt).slice(0, 180),
+    description: (strip(article.excerpt).trim() || strip(String(article.content || '').replace(/<\/(?:p|li|h[2-4])>|<br\s*\/?>/gi, ' ')))
+      .replace(/\s+/g, ' ').trim().slice(0, 180),
     body: main,
   };
 }
