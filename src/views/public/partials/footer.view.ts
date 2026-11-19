@@ -46,15 +46,22 @@ export function renderPublicFooter(settings: Row): string {
         <a href="Students.php">Hỗ trợ sinh viên</a>
       </div>
       <div class="footer-navigation">
+        <h2>Chương trình &amp; Dự án</h2>
+        <a href="Students.php">Học bổng</a>
+        <a href="HonorList.php">Đồng hành &amp; Cố vấn</a>
+        <a href="Activities.php">Hoạt động cộng đồng</a>
+      </div>
+      <div class="footer-navigation">
         <h2>Tin tức</h2>
         <a href="Notifications.php">Thông báo từ BĐH</a>
         <a href="Activities.php">Tin tức &amp; Sự kiện</a>
         <a href="Blog.php">We're Shining · Blog</a>
       </div>
       <div class="footer-navigation">
-        <h2>Kết nối</h2>
-        <a href="HonorList.php">Tri ân &amp; tài trợ</a>
-        <a href="Blog.php#chia-se">Gửi tâm tình</a>
+        <h2>Liên hệ</h2>
+        ${settings.location ? `<span>${icon('map-pin')} ${e(settings.location)}</span>` : ''}
+        ${settings.email ? `<a href="mailto:${e(settings.email)}">${e(settings.email)}</a>` : ''}
+        ${phoneClean ? `<a href="tel:${e(phoneClean)}">${e(settings.phone)}</a>` : ''}
         <a href="contact.php">Liên hệ CLB ${icon('arrow-up-right')}</a>
       </div>
     </div>

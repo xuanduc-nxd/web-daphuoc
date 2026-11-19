@@ -42,7 +42,7 @@ const base = process.env.UI_TEST_BASE_URL || 'http://127.0.0.1:8765';
       <head>
         <base href="${base}/">
       </head>
-      <body>
+      <body class="public-site">
         <header class="site-header"><div class="header-inner">Header</div></header>
         ${body}
       </body>
@@ -50,6 +50,7 @@ const base = process.env.UI_TEST_BASE_URL || 'http://127.0.0.1:8765';
 
     await page.setContent(fullHtml);
     await page.addStyleTag({ path: path.join(__dirname, '../public/CSS/site.css') });
+    await page.addStyleTag({ path: path.join(__dirname, '../public/CSS/foundation.css') });
     await page.addScriptTag({ path: path.join(__dirname, '../public/JS/site.js') });
 
     // Verify progress bar and back to top button were injected
@@ -63,10 +64,17 @@ const base = process.env.UI_TEST_BASE_URL || 'http://127.0.0.1:8765';
     // Verify reveal elements have been observed and given reveal classes
     const htmlHasClass = await page.evaluate(() => document.documentElement.classList.contains('has-scroll-reveal'));
     assert.equal(htmlHasClass, true, 'html has has-scroll-reveal class');
+    const thanks = page.locator('.foundation-thanks-panel');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.foundation-thanks-panel')).opacity === '0');
+    await thanks.evaluate(el => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
+    await page.waitForFunction(() => {
+      const panel = document.querySelector('.foundation-thanks-panel');
+      return !panel.classList.contains('reveal-init') && getComputedStyle(panel).opacity === '1';
+    });
 
     // Scroll down 500px
-    await page.evaluate(() => window.scrollTo(0, 500));
-    await page.waitForTimeout(100);
+    await page.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' }));
+    await page.waitForFunction(() => document.querySelector('.site-header').classList.contains('is-scrolled'));
 
     // Verify header elevation
     const headerIsScrolled = await page.evaluate(() => document.querySelector('.site-header').classList.contains('is-scrolled'));
@@ -83,6 +91,12 @@ const base = process.env.UI_TEST_BASE_URL || 'http://127.0.0.1:8765';
     // Test 2: Check responsiveness and no horizontal overflow at 1440px, 768px, 375px, 320px
     for (const width of [1440, 768, 375, 320]) {
       await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      await page.waitForFunction(() => document.querySelector('.site-header').getBoundingClientRect().top >= 0);
+      await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'instant' }));
+      await page.waitForFunction(() => document.querySelector('.site-header').getBoundingClientRect().bottom <= 0);
+      await page.evaluate(() => window.scrollTo({ top: 450, behavior: 'instant' }));
+      await page.waitForFunction(() => document.querySelector('.site-header').getBoundingClientRect().top >= 0);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
       assert.equal(overflow, false, `No horizontal overflow at ${width}px with scroll animations`);
     }

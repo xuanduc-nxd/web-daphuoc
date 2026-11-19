@@ -508,10 +508,13 @@ const freePort = async () => {
     await db.query("update members set image=$1,detail=$2 where id=$3",["https://example.com/private-photo.jpg","Ghi chú riêng không công khai",studentId]);
     const studentsHtml = (await request("/Students.php")).html;
     assert(studentsHtml.includes('Hỗ trợ sinh viên'),"Public student page has support heading");
-    for (const value of [studentForm.name,studentForm.direction]) assert(studentsHtml.includes(value),"Public page includes the approved student fields");
-    for (const value of [studentForm.school,studentForm.major,studentForm.support_needs,studentForm.expertise,"private-photo.jpg","Ghi chú riêng"]) assert(!studentsHtml.includes(value),"Public page hides private student fields and photo");
-    const publicStudentCard = /<article class="student-card">[\s\S]*?<\/article>/.exec(studentsHtml);
+    for (const value of [studentForm.name,studentForm.school,studentForm.major]) assert(studentsHtml.includes(value),"Public page includes the approved student fields");
+    for (const value of [studentForm.support_needs,"private-photo.jpg","Ghi chú riêng"]) assert(!studentsHtml.includes(value),"Public page hides private student fields and photo");
+    const publicStudentCard = /<a class="student-card student-directory-card"[\s\S]*?<\/a>/.exec(studentsHtml);
     assert(publicStudentCard && !publicStudentCard[0].includes('<img'),"Student card exists and contains no image");
+    const profile = await request("/Students.php?id="+encodeURIComponent(studentId));
+    for (const value of [studentForm.name,studentForm.direction,studentForm.school,studentForm.major,studentForm.expertise]) assert(profile.html.includes(value),"Profile shows the approved student fields");
+    for (const value of [studentForm.support_needs,"private-photo.jpg","Ghi chú riêng"]) assert(!profile.html.includes(value),"Profile hides internal data and photos");
     const studentListHtml = (await request("/admin/team.php?type=student")).html;
     for (const value of [studentForm.school,studentForm.major,studentForm.support_needs,studentForm.expertise]) assert(studentListHtml.includes(value),"Student admin list includes private fields");
     const sponsorPage = await request("/admin/content-edit.php?type=sponsor");

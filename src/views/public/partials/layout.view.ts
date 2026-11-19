@@ -18,7 +18,7 @@ export function publicFrame(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${e(description)}">
-  <meta name="theme-color" content="#19578f">
+  <meta name="theme-color" content="#086653">
   <meta property="og:title" content="${e(title)}">
   <meta property="og:description" content="${e(description)}">
   <meta property="og:type" content="${article ? 'article' : 'website'}">
@@ -30,9 +30,10 @@ export function publicFrame(
   <link rel="stylesheet" href="CSS/fonts.css">
   <link rel="stylesheet" href="CSS/icons.css">
   <link rel="stylesheet" href="CSS/site.css?v=shining-layout-2">
-  <script src="JS/site.js?v=shining-layout-2" defer></script>
+  <script src="JS/site.js?v=scroll-reveal-1" defer></script>
+  <link rel="stylesheet" href="CSS/foundation.css?v=activity-detail-3">
 </head>
-<body>
+<body class="public-site">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   ${renderPublicHeader(page, settings, article)}
   ${body}

@@ -98,8 +98,9 @@ export function renderDetailPage(
 
   const main = `<main id="main-content" class="container article-main">
     ${breadcrumb('Bài viết', backLabel, backHref)}
-    <div class="article-layout">
+    <div class="article-layout${kind === 'activity' ? ' activity-detail' : ''}">
       <article>
+        ${kind === 'activity' ? '<div class="activity-intro">' : ''}
         <header class="article-header">
           <div class="article-meta">
             <span class="category-label">${e(category)}</span>
@@ -117,6 +118,7 @@ export function renderDetailPage(
               </button>`
             : ''
         }
+        ${kind === 'activity' ? '</div><div class="activity-story">' : ''}
         ${kind === 'activity' && youtubeEmbedUrl(article.video_uid) ? `<section class="article-video" aria-label="Video hoạt động">
           <h2>Video hoạt động</h2>
           <iframe src="${e(youtubeEmbedUrl(article.video_uid))}" title="Video: ${e(article.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
@@ -124,6 +126,7 @@ export function renderDetailPage(
         <div class="article-content">
           ${article.content_format === 'plain' || (kind === 'blog' && !article.content_format) ? e(article.content).replace(/\n/g, '<br>') : richText(String(article.content || ''))}
         </div>
+        ${kind === 'activity' ? '</div>' : ''}
         ${gallery.length ? galleryView(gallery, article) : ''}
         <div class="article-actions">
           <a class="text-link" href="${backHref}">${icon('arrow-left')} Quay lại ${backLabel}</a>

@@ -23,8 +23,8 @@ export async function publicStudents(): Promise<Row[]> {
           Number(a.sort_order || 0) - Number(b.sort_order || 0) ||
           String(a.id).localeCompare(String(b.id)),
       )
-      .map(row => ({ name: row.name, direction: row.direction }));
+      .map(row => ({ id: row.id, name: row.name, direction: row.direction, school: row.school, major: row.major, expertise: row.expertise }));
   }
 
-  return select('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'name,direction');
+  return select('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'id,name,direction,school,major,expertise');
 }

@@ -537,18 +537,23 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
+    let lastHeaderScrollY = window.scrollY;
     let ticking = false;
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
         const scrollY = window.scrollY || document.documentElement.scrollTop;
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
         if (header) {
+          const currentY = Math.min(Math.max(0, scrollY), maxScroll);
+          if (currentY <= 15 || Math.abs(currentY - lastHeaderScrollY) >= 6) {
+            header.classList.toggle("is-hidden", currentY > 15 && currentY > lastHeaderScrollY);
+            lastHeaderScrollY = currentY;
+          }
           header.classList.toggle("is-scrolled", scrollY > 15);
         }
         if (progressBar) {
-          const maxScroll =
-            document.documentElement.scrollHeight - window.innerHeight;
           const progress =
             maxScroll > 0 ? Math.min(Math.max(scrollY / maxScroll, 0), 1) : 0;
           progressBar.style.transform = `scaleX(${progress})`;
@@ -570,6 +575,14 @@
     const selectors = [
       "[data-reveal]",
       ".reveal-on-scroll",
+      ".foundation-about-copy",
+      ".foundation-about-media",
+      ".foundation-heading",
+      ".foundation-activity-card",
+      ".foundation-notice",
+      ".foundation-student-card",
+      ".foundation-empty",
+      ".foundation-thanks-panel",
       ".tsnt-section-header",
       ".tsnt-section-header-row",
       ".section-heading",
@@ -600,7 +613,7 @@
     document.documentElement.classList.add("has-scroll-reveal");
 
     const gridSelectors =
-      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid";
+      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid, .foundation-activity-grid, .foundation-student-grid, .foundation-notice-list";
 
     targets.forEach((el) => {
       el.classList.add("reveal-init");

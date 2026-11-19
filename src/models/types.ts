@@ -19,6 +19,8 @@ export interface PublicPageModel {
   notifications?: Row[];
   sponsors?: Row[];
   students?: Row[];
+  studentPage?: number;
+  studentId?: string;
   blogs?: Row[];
   article?: Row | null;
   recent?: Row[];

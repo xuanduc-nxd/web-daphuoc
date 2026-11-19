@@ -38,6 +38,8 @@ export async function publicRoute(
       case 'Blog.php':
         return loadBlogPageData(url, data);
       case 'Students.php':
+        data.studentPage = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
+        data.studentId = url.searchParams.get('id') || '';
         return loadStudentsPageData(data);
       case 'ExecutiveBoard.php':
         return loadExecutiveBoardPageData(data);
@@ -57,5 +59,6 @@ export async function publicRoute(
 
   const [site] = await Promise.all([settings(), loadPageData()]);
   const result = renderPublicPage(page, site, data);
+  if (page === 'Students.php' && data.studentId && !(data.rows || []).some(row => String(row.id) === data.studentId)) result.status = 404;
   return { ...result, status: formStatus === 200 ? result.status : formStatus };
 }

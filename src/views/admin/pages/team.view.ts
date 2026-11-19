@@ -10,7 +10,7 @@ export function teamView(rows: Row[], type: string, session: Session): string {
     <div>
       <p class="eyebrow">Giới thiệu</p>
       <h1>${student ? 'Sinh viên' : 'Ban điều hành'}</h1>
-      <p>${student ? 'Quản lý thông tin sinh viên. Trang công khai chỉ hiển thị họ tên và định hướng.' : 'Quản lý hồ sơ và ảnh đại diện hiển thị trên website.'}</p>
+      <p>${student ? 'Quản lý hồ sơ sinh viên công khai. Ảnh, ghi chú và nhu cầu hỗ trợ chỉ dành cho admin.' : 'Quản lý hồ sơ và ảnh đại diện hiển thị trên website.'}</p>
     </div>
     <a class="button primary" href="team-edit.php?type=${type}">${icon('plus')} Thêm ${student ? 'sinh viên' : 'thành viên'}</a>
   </section>
@@ -97,7 +97,7 @@ export function teamEditView(
     <div>
       <p class="eyebrow">${student ? 'Sinh viên' : 'Ban điều hành / Cố vấn'}</p>
       <h1>${existing ? 'Sửa hồ sơ' : 'Thêm hồ sơ'}</h1>
-      <p>${student ? 'Chỉ họ tên và định hướng hiển thị công khai. Trường, ngành học, nhu cầu hỗ trợ và lĩnh vực chuyên môn chỉ dành cho admin.' : 'Cập nhật thông tin và ảnh đại diện cho hồ sơ.'}</p>
+      <p>${student ? 'Tên, trường, ngành học, định hướng và chuyên môn hiển thị công khai. Nhu cầu hỗ trợ, ghi chú và ảnh chỉ dành cho admin.' : 'Cập nhật thông tin và ảnh đại diện cho hồ sơ.'}</p>
     </div>
     <a class="button ghost" href="team.php?type=${type}">${icon('arrow-left')} Quay lại</a>
   </section>

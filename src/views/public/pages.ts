@@ -64,7 +64,7 @@ export function renderPublicPage(
     case 'Students.php': {
       const rows = data.rows || [];
       title = 'Hỗ trợ sinh viên · CLB Golf Đa Phước';
-      body = renderStudentsPage(rows);
+      body = renderStudentsPage(rows, data.studentPage, data.studentId);
       break;
     }
     case 'ExecutiveBoard.php': {

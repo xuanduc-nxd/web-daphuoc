@@ -7,7 +7,7 @@ Website TypeScript/Node.js, CSS và JavaScript thuần. Giao diện nền sáng,
 Supabase PostgreSQL lưu nội dung; ảnh mới được tối ưu và lưu trên Cloudinary bằng upload có chữ ký phía máy chủ. Supabase Storage chỉ còn chứa ảnh cũ trong thời gian chuyển đổi.
 
 - posts: Hoạt động, Thông báo, Blog; nháp/xuất bản, album tối đa 20 ảnh cho Hoạt động, ghim và ngày hết hạn cho Thông báo. Khách có thể gửi cảm nghĩ/lời cảm ơn ở Blog mà không cần đăng nhập; bài vào danh sách nháp để quản trị duyệt trước khi công khai.
-- members: Ban điều hành, cố vấn và sinh viên. Trang Hỗ trợ sinh viên chỉ công khai tên và định hướng của sinh viên, không hiển thị ảnh. Trường, ngành học, nhu cầu hỗ trợ và lĩnh vực chuyên môn chỉ hiển thị trong admin.
+- members: Ban điều hành, cố vấn và sinh viên. Danh sách sinh viên phân trang 12 hồ sơ mỗi trang, liên kết tới Students.php?id=ID. Tên, trường, ngành học, định hướng và chuyên môn được công khai khi có dữ liệu. Ảnh, ghi chú và nhu cầu hỗ trợ chỉ dành cho admin.
 - Trang Ban điều hành hiển thị Ban cố vấn trước, tiếp theo là Ban điều hành khóa hiện tại và các khóa cũ theo năm bắt đầu. Hồ sơ Ban điều hành có thể được phân khóa trong admin; hồ sơ cũ chưa phân khóa sẽ ở nhóm riêng cho đến khi được cập nhật. Project Supabase hiện có cần chạy `supabase-board-terms.sql` trước khi triển khai mã mới.
 - Admin có thể nhập chức danh và thứ tự hiển thị của từng thành viên; tên khóa hiện tại được đặt trong Cài đặt. Các khóa cũ được mở theo từng nhiệm kỳ trên trang công khai.
 - sponsors, about_sections, settings: tri ân, giới thiệu, thông tin liên hệ và ảnh chính trang chủ.
@@ -25,7 +25,7 @@ Mỗi bài Hoạt động có thể gắn một video YouTube. Tải video lên 
 
 Link `youtube.com/watch`, `youtu.be`, Shorts và Live được chấp nhận. Để trống trường link rồi lưu để gỡ video khỏi bài viết. Việc gỡ link không xóa video trên YouTube. Video phải cho phép nhúng thì trình phát mới hoạt động.
 
-Ảnh đầu trang chủ có thể có tối đa 4 ảnh bổ sung. Nếu dùng video YouTube ở khu vực hoạt động tiêu biểu trên trang chủ, project Supabase hiện có cần chạy [supabase-showcase-video.sql](supabase-showcase-video.sql) một lần trong SQL Editor để thêm cột `settings.showcase_video_url`.
+Hero trang chủ dùng ảnh tập thể thật tại public/assets/images/scholarship-group.jpg. Ảnh trang trí cảm ơn ở public/assets/images/foundation-thanks.png. Nếu dùng video YouTube ở khu vực hoạt động tiêu biểu trên trang chủ, project Supabase hiện có cần chạy [supabase-showcase-video.sql](supabase-showcase-video.sql) một lần trong SQL Editor để thêm cột `settings.showcase_video_url`.
 - Các thao tác cập nhật/xóa kiểm tra version để tránh ghi đè thay đổi của người khác.
 - JSON hiện có chỉ làm nguồn nhập và bản xem trước chỉ đọc trên máy cá nhân. Website không còn gọi SheetDB. Khi Supabase lỗi, website trả HTTP 503; không âm thầm đọc hoặc ghi sang JSON.
 

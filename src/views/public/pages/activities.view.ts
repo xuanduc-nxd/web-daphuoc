@@ -6,7 +6,7 @@ export function renderActivitiesPage(rows: Row[]): string {
   const title = 'Hoạt động của CLB';
   const intro = 'Những cuộc gặp gỡ, những hành trình sẻ chia và những dấu ấn cùng nhau.';
 
-  return `<main id="main-content" class="container listing-main">
+  return `<main id="main-content" class="container listing-main activities-page">
     ${breadcrumb(label)}
     ${heading(title, intro, 'users-three')}
     ${
