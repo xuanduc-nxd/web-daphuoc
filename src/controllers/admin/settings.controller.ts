@@ -132,7 +132,7 @@ export async function handleSettings(
       if (bannerUpload) { uploadedThisRequest.push(bannerUpload); site.banner_image = bannerUpload; }
       const aboutBannerUpload = await uploadedImage(form, 'banner', 'about_banner_upload');
       if (aboutBannerUpload) { uploadedThisRequest.push(aboutBannerUpload); site.about_banner_image = aboutBannerUpload; }
-      const uploaded = await uploadedImage(form, 'hero');
+      const uploaded = await uploadedImage(form, 'hero', 'hero_image_upload');
       if (uploaded) { uploadedThisRequest.push(uploaded); site.hero_image = uploaded; }
       const aboutHeroUpload = await uploadedImage(form, 'hero', 'about_hero_upload');
       if (aboutHeroUpload) { uploadedThisRequest.push(aboutHeroUpload); site.about_hero_image = aboutHeroUpload; }

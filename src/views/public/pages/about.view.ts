@@ -1,5 +1,5 @@
 import { type Row } from '../../../core/config.ts';
-import { e, icon, image, srcset, richText, breadcrumb } from '../components.ts';
+import { e, icon, image, srcset, richText } from '../components.ts';
 import { bannerCarousel } from '../banner-carousel.ts';
 
 export function renderAboutPage(site: Row, rows: Row[]): string {
@@ -14,47 +14,36 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
     targets.set(String(row.category || 'Mục tiêu'), [...(targets.get(String(row.category || 'Mục tiêu')) || []), row]);
   }
 
-  const phoneClean = String(site.phone || '').replace(/[^0-9+]/g, '');
   const heroPhoto = image(site.hero_image, 'Image/act-1.jpg');
   const aboutHero = image(site.about_hero_image, 'Image/act-1.jpg');
 
   const pillars = [
     {
-      theme: 'blue',
-      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
-      tag: 'CHẮP CÁNH TRI THỨC',
-      title: 'Tài trợ học bổng, nâng cao năng lực cộng đồng',
-      desc: 'Đồng hành và hỗ trợ học sinh, sinh viên có hoàn cảnh khó khăn vững bước đến giảng đường, theo đuổi tri thức và hiện thực hóa ước mơ.',
+        "title": "Tiếp sức học tập",
+        "desc": "Hỗ trợ học bổng, giảm gánh nặng tài chính để sinh viên yên tâm học tập.",
+        "svg": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m2 9 10-5 10 5-10 5-10-5Zm4 3v6c4 3 8 3 12 0v-6M22 9v8\"/></svg>"
     },
     {
-      theme: 'green',
-      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg>',
-      tag: 'ĐỒNG HÀNH DÀI HẠN',
-      title: 'Nuôi dưỡng hành trình trưởng thành toàn diện',
-      desc: 'Không chỉ trao học bổng, CLB đồng hành cùng người học trong học tập, cuộc sống và hành trình trưởng thành, hướng tới những công dân có ích cho gia đình và xã hội.',
+        "title": "Đồng hành phát triển",
+        "desc": "Cùng sinh viên rèn luyện kỹ năng, định hướng nghề nghiệp và phát triển toàn diện.",
+        "svg": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"7\" r=\"3\"/><path d=\"M6 21v-3a6 6 0 0 1 12 0v3M5 5a3 3 0 0 0 0 6M19 5a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4\"/></svg>"
     },
     {
-      theme: 'orange',
-      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      tag: 'PHÁT TRIỂN TOÀN DIỆN',
-      title: 'Trang bị hành trang tương lai',
-      desc: 'Bồi dưỡng kiến thức, kỹ năng mềm, kỹ năng nghề nghiệp, giao tiếp, ứng xử và kinh nghiệm thực tiễn, mở rộng cơ hội việc làm và phát triển sự nghiệp.',
+        "title": "Trang bị hành trang",
+        "desc": "Tạo cơ hội tham gia các hoạt động học thuật, ngoại khóa và trải nghiệm thực tiễn.",
+        "svg": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14 5c3-3 7-3 7-3s0 4-3 7l-7 7-5-5 8-6ZM6 11H2l4-5h6M11 16v6l5-5v-6M7 17l-4 4M4 16l-2 2M9 20l-2 2\"/><circle cx=\"16\" cy=\"7\" r=\"1.5\"/></svg>"
     },
     {
-      theme: 'purple',
-      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-      tag: 'KẾT NỐI CỘNG ĐỒNG',
-      title: 'Lan tỏa giá trị nhân văn đến cộng đồng',
-      desc: 'Xây dựng cộng đồng và Đại gia đình CLB Golf Đa Phước, tạo môi trường giao lưu, sẻ chia, học hỏi và lan tỏa tinh thần tương thân tương ái.',
+        "title": "Kết nối cộng đồng",
+        "desc": "Lan tỏa tinh thần sẻ chia, gắn kết sinh viên, nhà tài trợ và các đối tác.",
+        "svg": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m2 8 4-3 4 2 4-2 8 4-4 9-5 3-7-4-4-9Zm8-1-3 5 3 2 4-4 6 5M6 17l3-3M9 19l3-3M12 20l3-3\"/></svg>"
     },
     {
-      theme: 'cyan',
-      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>',
-      tag: 'KIẾN TẠO NGUỒN NHÂN LỰC',
-      title: 'Phát triển nhân lực chất lượng cao cho tương lai',
-      desc: 'Gắn kết trách nhiệm an sinh xã hội của CLB, hướng tới bồi dưỡng thế hệ sinh viên giàu tri thức, bản lĩnh và đóng góp cho sự phát triển bền vững của đất nước.',
-    },
-  ];
+        "title": "Phát triển bền vững",
+        "desc": "Xây dựng Quỹ ổn định, minh bạch và có sức lan tỏa lâu dài trong xã hội.",
+        "svg": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 22V12M12 15C4 15 2 10 2 3c7 0 10 4 10 12ZM12 12c0-7 4-10 10-10 0 7-3 10-10 10ZM6 7l6 8M18 6l-6 6\"/></svg>"
+    }
+];
 
   const targetEntries = [...targets.entries()];
 
@@ -62,14 +51,18 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
     <section class="tsnt-page-banner about-page-banner">
       ${bannerCarousel(site, site.about_banner_image || site.banner_image, 'about_banner_slides', 'assets/images/hero-clb.jpg', 'about-banner-photo')}
       <div class="container">
-        ${breadcrumb('Giới thiệu')}
         <div class="tsnt-banner-body">
-          <div class="hero-eyebrow"><span class="eyebrow-dot"></span>Về chúng tôi</div>
+          <div class="hero-eyebrow">Tổng quan CLB Golf Đa Phước</div>
           <h1>
             <span class="tsnt-banner-title-org">${e(site.site_name)}</span>
             <span class="tsnt-banner-title-main">Thắp sáng những ước mơ, nâng bước giảng đường</span>
           </h1>
-          <p class="tsnt-banner-sub">Bền bỉ kết nối niềm đam mê thể thao với trách nhiệm xã hội, hỗ trợ thiết thực cho các học sinh, sinh viên có hoàn cảnh khó khăn vươn lên trong học tập tại Đà Nẵng.</p>
+          <svg class="about-hero-flourish" viewBox="0 0 100 24" fill="none" aria-hidden="true"><path d="M3 20C28 1 49 1 67 8C78 12 86 12 97 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <p class="tsnt-banner-sub">Kết nối đam mê golf, sẻ chia cơ hội học tập và đồng hành cùng thế hệ trẻ Đà Nẵng.</p>
+          <div class="about-hero-actions">
+            <a class="button about-hero-primary" href="#ton-chi">${icon('arrow-right')} Khám phá câu chuyện</a>
+            <a class="button about-hero-secondary" href="contact.php">${icon('hand-heart')} Đồng hành cùng CLB</a>
+          </div>
         </div>
       </div>
     </section>
@@ -99,13 +92,12 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
 
           <div class="tsnt-story-collage">
             <div class="tsnt-collage-main">
-              <button type="button" class="tsnt-collage-btn" data-lightbox="${e(aboutHero)}" aria-label="Xem ảnh hoạt động trao học bổng">
-                <img src="${e(aboutHero)}" srcset="${e(srcset(aboutHero))}" sizes="(max-width:767px) calc(100vw - 36px), 560px" data-fallback="Image/act-1.jpg" width="800" height="600" alt="Hoạt động trao học bổng của CLB Golf Đa Phước">
-                <span class="tsnt-collage-caption">Những bước chân đồng hành cùng sinh viên Đà Nẵng</span>
+              <button type="button" class="tsnt-collage-btn" data-lightbox="${e(heroPhoto)}" aria-label="Xem ảnh hoạt động của CLB Golf Đa Phước">
+                <img src="${e(heroPhoto)}" srcset="${e(srcset(heroPhoto))}" sizes="(max-width:767px) calc(100vw - 36px), 560px" data-fallback="Image/act-1.jpg" width="800" height="600" alt="Hoạt động của CLB Golf Đa Phước">
               </button>
             </div>
             <div class="tsnt-collage-sub">
-              <img src="${e(heroPhoto)}" srcset="${e(srcset(heroPhoto))}" sizes="192px" data-fallback="assets/images/activity-480.webp" width="320" height="240" alt="Từ một ước mơ nhỏ đến hành trình lớn" loading="lazy">
+              <img src="${e(aboutHero)}" srcset="${e(srcset(aboutHero))}" sizes="192px" data-fallback="Image/act-1.jpg" width="320" height="240" alt="Hoạt động trao học bổng của CLB Golf Đa Phước" loading="lazy">
             </div>
             <div class="tsnt-collage-badge">
               <span>Đồng hành</span>
@@ -116,45 +108,31 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
       </div>
     </section>
 
-    <section class="tsnt-section bg-gray-soft tsnt-org-section">
+    <section class="tsnt-section tsnt-org-section" aria-labelledby="org-title">
       <div class="container">
-        <div class="tsnt-org-grid">
-          <div>
-            <p class="tsnt-eyebrow-tag">Thông tin tổ chức</p>
-            <h2 class="tsnt-org-title">${e(site.site_name)}</h2>
-            <p class="tsnt-org-sub">Da Phuoc Golf Club &amp; Friends · Scholarship Fund</p>
-            <p class="tsnt-org-desc">${e(site.notice)}</p>
+        <div class="about-org-strip">
+          <div class="about-org-intro">
+            <p class="about-org-eyebrow">Thông tin tổ chức</p>
+            <h2 id="org-title">Quỹ học bổng<br>CLB Golf Đa Phước</h2>
           </div>
-          <div class="tsnt-org-cards">
-            <div class="tsnt-org-card">
-              <span class="tsnt-org-icon">${icon('map-pin')}</span>
-              <div>
-                <p class="tsnt-org-label">Khu vực hoạt động</p>
-                <p class="tsnt-org-val">${e(site.location || 'Đà Nẵng, Việt Nam')}</p>
-              </div>
+          <dl class="about-org-facts">
+            <div class="about-org-fact">
+              <dt><span class="about-org-icon">${icon('map-pin')}</span>Địa bàn hoạt động</dt>
+              <dd>${e(site.location || 'Đà Nẵng, Việt Nam')}</dd>
             </div>
-            <div class="tsnt-org-card">
-              <span class="tsnt-org-icon">${icon('phone')}</span>
-              <div>
-                <p class="tsnt-org-label">Điện thoại liên hệ</p>
-                <p class="tsnt-org-val">${phoneClean ? `<a href="tel:${e(phoneClean)}">${e(site.phone)}</a>` : 'Liên hệ qua trang thông tin CLB'}</p>
-              </div>
+            <div class="about-org-fact">
+              <dt><span class="about-org-icon">${icon('users-three')}</span>Đối tượng hỗ trợ</dt>
+              <dd>Sinh viên các trường<br>đại học</dd>
             </div>
-            <div class="tsnt-org-card">
-              <span class="tsnt-org-icon">${icon('envelope')}</span>
-              <div>
-                <p class="tsnt-org-label">Email chính thức</p>
-                <p class="tsnt-org-val">${site.email ? `<a href="mailto:${e(site.email)}">${e(site.email)}</a>` : 'Đang cập nhật tại trang Liên hệ'}</p>
-              </div>
+            <div class="about-org-fact">
+              <dt><span class="about-org-icon"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg></span>Lĩnh vực trọng tâm</dt>
+              <dd>Giáo dục &amp; phát triển<br>nguồn nhân lực</dd>
             </div>
-            <div class="tsnt-org-card">
-              <span class="tsnt-org-icon">${icon('hand-heart')}</span>
-              <div>
-                <p class="tsnt-org-label">Sứ mệnh trọng tâm</p>
-                <p class="tsnt-org-val">Khuyến học khuyến tài &amp; Hỗ trợ sinh viên</p>
-              </div>
+            <div class="about-org-fact">
+              <dt><span class="about-org-icon"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></span>Hình thức hoạt động</dt>
+              <dd>Phi lợi nhuận,<br>đồng hành dài hạn</dd>
             </div>
-          </div>
+          </dl>
         </div>
       </div>
     </section>
@@ -163,16 +141,14 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
       <div class="container">
         <div class="tsnt-section-header">
           <p class="tsnt-eyebrow-tag">Sứ mệnh &amp; Giá trị cốt lõi</p>
-          <h2 class="tsnt-title">Hành trình Thắp Sáng Niềm Tin</h2>
-          <p class="tsnt-subtitle">${e(site.site_name)} mang sứ mệnh trao cơ hội giáo dục và đồng hành toàn diện cùng những sinh viên có hoàn cảnh khó khăn nhưng giàu nghị lực và khát vọng vươn lên.</p>
+          <h2 class="tsnt-title">Hành trình <span>Thắp Sáng Niềm Tin</span></h2>
+          <p class="tsnt-subtitle">Quỹ Học bổng CLB Golf Đa Phước mang sứ mệnh trao cơ hội giáo dục và đồng hành toàn diện cùng sinh viên, vì một thế hệ tri thức, nhân ái và đóng góp tích cực cho cộng đồng.</p>
         </div>
         <div class="tsnt-pillars-grid">
           ${pillars
             .map(
-              p => `<article class="tsnt-pillar-card is-${p.theme}">
-            <span class="tsnt-pillar-topline"></span>
+              p => `<article class="tsnt-pillar-card">
             <div class="tsnt-pillar-icon">${p.svg}</div>
-            <p class="tsnt-pillar-tag">${e(p.tag)}</p>
             <h3>${e(p.title)}</h3>
             <p>${e(p.desc)}</p>
           </article>`,
@@ -182,43 +158,18 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
       </div>
     </section>
 
-    <section id="muc-tieu" class="tsnt-section bg-gray-soft">
+    <section id="muc-tieu" class="tsnt-section bg-gray-soft about-roadmap">
       <div class="container">
         <div class="tsnt-timeline-header">
-          <p class="tsnt-eyebrow-tag">Lộ trình &amp; Mục tiêu phát triển</p>
-          <h2 class="tsnt-title">Các cột mốc &amp; Mục tiêu quan trọng</h2>
-          <p class="tsnt-subtitle">Định hướng phát triển và các mục tiêu đồng hành lâu dài cùng học sinh, sinh viên của ${e(site.site_name)}.</p>
+          <p class="tsnt-eyebrow-tag">Lộ trình phát triển</p>
+          <h2 class="tsnt-title">Các giai đoạn trọng tâm</h2>
         </div>
-        ${
-          targetEntries.length
-            ? `<div class="tsnt-timeline">
-          <div class="tsnt-timeline-line" aria-hidden="true"></div>
-          ${targetEntries
-            .map(([period, items], idx) => {
-              const isEven = idx % 2 === 1;
-              const isLast = idx === targetEntries.length - 1;
-              const badgeLabel = isLast ? '★' : String(idx + 1).padStart(2, '0');
-              return `<article class="tsnt-timeline-item ${isEven ? 'is-reversed' : ''} ${isLast ? 'is-featured' : ''}">
-              <div class="tsnt-timeline-content">
-                <span class="tsnt-timeline-node-mobile">${e(badgeLabel)}</span>
-                <div class="tsnt-timeline-card">
-                  <span class="tsnt-timeline-step">Giai đoạn 0${idx + 1}</span>
-                  <h3>${e(period)}</h3>
-                  <ul class="tsnt-timeline-list">${items.map(row => `<li>${richText(String(row.content || ''))}</li>`).join('')}</ul>
-                </div>
-              </div>
-              <div class="tsnt-timeline-node" aria-hidden="true">${e(badgeLabel)}</div>
-              <div class="tsnt-timeline-visual">
-                <div class="tsnt-timeline-photo">
-                  <img src="Image/act-1.jpg" srcset="${e(srcset('Image/act-1.jpg'))}" sizes="320px" width="480" height="320" alt="${e(period)}" loading="lazy">
-                </div>
-              </div>
-            </article>`;
-            })
-            .join('')}
-        </div>`
-            : ''
-        }
+        ${targetEntries.length ? `<div class="about-roadmap-grid">
+          ${targetEntries.map(([period, items]) => `<article class="about-roadmap-card">
+            <h3><span class="about-roadmap-dot" aria-hidden="true"></span>${e(period)}</h3>
+            <ul>${items.map(row => `<li>${richText(String(row.content || ''))}</li>`).join('')}</ul>
+          </article>`).join('')}
+        </div>` : '<p class="about-roadmap-empty">Lộ trình phát triển đang được cập nhật.</p>'}
       </div>
     </section>
 
@@ -243,6 +194,16 @@ export function renderAboutPage(site: Row, rows: Row[]): string {
             </div>
           </section>
         </div>
+      </div>
+    </section>
+    <section class="about-support" aria-labelledby="about-support-title">
+      <div class="container about-support-inner">
+        <div>
+          <p class="about-support-eyebrow">Cùng trao cơ hội, cùng nuôi dưỡng ước mơ</p>
+          <h2 id="about-support-title">Đồng hành cùng Quỹ</h2>
+          <p>Chung tay cùng Quỹ Học bổng CLB Golf Đa Phước để tiếp sức cho nhiều sinh viên hơn trên hành trình chinh phục tri thức.</p>
+        </div>
+        <a class="button about-support-link" href="contact.php">${icon('hand-heart')} Liên hệ đồng hành ${icon('arrow-right')}</a>
       </div>
     </section>
   </main>`;

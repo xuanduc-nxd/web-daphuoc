@@ -599,6 +599,9 @@
       ".student-card",
       ".honor-card",
       ".tsnt-timeline-item",
+      ".about-roadmap-card",
+      ".about-support-inner > div",
+      ".about-support-link",
       ".article-gallery",
       ".article-video",
       ".article-cover"
@@ -613,7 +616,7 @@
     document.documentElement.classList.add("has-scroll-reveal");
 
     const gridSelectors =
-      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid, .foundation-activity-grid, .foundation-student-grid, .foundation-notice-list";
+      ".card-grid, .tsnt-impact-grid, .tsnt-quick-cards, .tsnt-sponsors-grid, .tsnt-shining-grid, .news-grid, .team-grid, .students-grid, .sponsors-grid, .related-posts-grid, .home-activity-grid, .foundation-activity-grid, .foundation-student-grid, .foundation-notice-list, .about-roadmap-grid, .about-support-inner";
 
     const countsByGrid = new Map();
     targets.forEach((el) => {

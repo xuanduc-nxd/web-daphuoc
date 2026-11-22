@@ -43,8 +43,8 @@ export function publicFrame(
   <link rel="preload" href="assets/fonts/be-vietnam-pro-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="CSS/fonts.css">
   <link rel="stylesheet" href="CSS/icons.css">
-  <link rel="stylesheet" href="CSS/site.css?v=shining-layout-2">
-  <script src="JS/site.js?v=scroll-reveal-2" defer></script>
+  <link rel="stylesheet" href="CSS/site.css?v=about-overview-11">
+  <script src="JS/site.js?v=scroll-reveal-3" defer></script>
   <link rel="stylesheet" href="CSS/foundation.css?v=webp-1">
 </head>
 <body class="public-site">
