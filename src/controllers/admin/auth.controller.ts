@@ -5,7 +5,8 @@ import { authenticate, requireAdmin } from '../../services/admin.ts';
 import { loginView } from '../../views/admin/pages/login.view.ts';
 import { errorMessage } from './helpers.ts';
 
-export function handleLogout(session: Session): RouteResult {
+export function handleLogout(method: string, form: Form, session: Session): RouteResult {
+  if (method !== 'POST' || value(form, 'logout_token') !== session.token()) return { status: 405, html: 'Yêu cầu đăng xuất không hợp lệ.' };
   session.destroy();
   return { location: 'login.php' };
 }

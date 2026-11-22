@@ -5,10 +5,11 @@ import { isIP } from 'node:net';
 import { pipeline } from 'node:stream/promises';
 import { gzipSync } from 'node:zlib';
 import { fileTypeFromFile } from 'file-type';
-import { ROOT, InputError, StorageError } from './core/config.ts';
+import { ROOT, InputError, RateLimitError, StorageError } from './core/config.ts';
 import { uploadDir } from './models/repository.ts';
 import { acceptsGzip, parseForm, Session, sendHtml, redirect, type Form } from './core/http.ts';
 import { adminRoute } from './controllers/admin.ts';
+import { requireAdmin } from './services/admin.ts';
 import { publicRoute } from './controllers/public.ts';
 import { errorPage } from './views/public/components.ts';
 
@@ -261,6 +262,13 @@ export async function handle(req: IncomingMessage, res: ServerResponse): Promise
 
     if (admin) {
       const session = Session.open(req);
+      if (method === 'POST' && page !== 'login.php' && !(await requireAdmin(session))) {
+        redirect(res, 'login.php');
+        return;
+      }
+      if (method === 'POST' && page === 'login.php' && !String(req.headers['content-type'] || '').startsWith('application/x-www-form-urlencoded')) {
+        throw new InputError('Định dạng đăng nhập không hợp lệ.');
+      }
       form = method === 'POST' ? await parseForm(req) : { fields: {}, files: {}, cleanup: () => {} };
       const result = await adminRoute(
         page,
@@ -287,7 +295,7 @@ export async function handle(req: IncomingMessage, res: ServerResponse): Promise
         req,
         res,
         errorPage(),
-        error instanceof StorageError ? 503 : error instanceof InputError ? 400 : 500,
+        error instanceof StorageError ? 503 : error instanceof RateLimitError ? 429 : error instanceof InputError ? 400 : 500,
       );
     } else {
       res.end();

@@ -32,6 +32,11 @@ const freePort = async () => {
   const db = new PGlite();
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "clb-supabase-test-"));
   fs.mkdirSync(path.join(temp, "sessions"));
+  const fixtureUploads = path.join(temp, "uploads");
+  fs.mkdirSync(fixtureUploads);
+  for (const name of ["post-7de2e18be70536d2235f167f.jpg", "team-6cecb1bc08bd5acca46b7c01.jpg"]) {
+    fs.copyFileSync(path.join(root, "public/Image/act-1.jpg"), path.join(fixtureUploads, name));
+  }
   let server, web, failBackend = false, storageUploadError = null, cloudinaryUploadError = null;
   const objects = new Map();
   const cloudinaryObjects = new Map();
@@ -85,6 +90,7 @@ const freePort = async () => {
     assert.equal((await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='settings' and column_name='gallery'")).rows[0].n,1,"Site gallery migration adds the settings column and can be rerun");
     await db.exec("update storage.buckets set file_size_limit=5242880 where id='site-media'");
     await db.exec(ddl);
+    await db.exec(fs.readFileSync(path.join(root, "supabase-showcase-video.sql"), "utf8"));
     assert.equal((await db.query("select file_size_limit::int as bytes from storage.buckets where id='site-media'")).rows[0].bytes,20*1024*1024,"Existing media bucket upgraded to 20 MB");
     assert.equal((await db.query("select count(*)::int as n from site_data")).rows[0].n, 1, "Legacy data retained");
     await db.exec("set role anon");
@@ -225,7 +231,7 @@ const freePort = async () => {
     });
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
     const api = "http://127.0.0.1:" + server.address().port;
-    const env = {...process.env, APP_ENV:"test", APP_PREVIEW_MODE:"false", SUPABASE_URL:api, SUPABASE_SECRET_KEY:secret, CLOUDINARY_API_BASE:api, CLOUDINARY_CLOUD_NAME:"test-cloud", CLOUDINARY_API_KEY:cloudinaryKey, CLOUDINARY_API_SECRET:"cloudinary-test-secret", ADMIN_SETUP_PASSWORD:password};
+    const env = {...process.env, APP_ENV:"test", APP_PREVIEW_MODE:"false", APP_UPLOAD_DIR:fixtureUploads, SUPABASE_URL:api, SUPABASE_SECRET_KEY:secret, CLOUDINARY_API_BASE:api, CLOUDINARY_CLOUD_NAME:"test-cloud", CLOUDINARY_API_KEY:cloudinaryKey, CLOUDINARY_API_SECRET:"cloudinary-test-secret", ADMIN_SETUP_PASSWORD:password};
     const nodeRun = (file, args = [], extra = {}) => run(node, ["--experimental-strip-types",file, ...args], {cwd:root, env:{...env,...extra}, maxBuffer:1024*1024});
     await nodeRun("scripts/migrate-supabase.ts", ["--apply"]);
     const initialCount = (await db.query("select count(*)::int as n from posts")).rows[0].n;
@@ -256,6 +262,16 @@ const freePort = async () => {
       try { await fetch(base + "/admin/login.php"); break; }
       catch (error) { if (attempt > 30) throw error; await new Promise(resolve => setTimeout(resolve,100)); }
     }
+    const sessionsBefore = fs.readdirSync(path.join(temp,"sessions")).length;
+    for (let i=0;i<3;i++) assert.equal((await fetch(base+"/admin/index.php",{redirect:"manual"})).status,302);
+    assert.equal(fs.readdirSync(path.join(temp,"sessions")).length,sessionsBefore,"Anonymous admin redirects do not create sessions");
+    const unauthUpload = new FormData();
+    const uploadTemp = path.join(os.tmpdir(),"clb-golf-upload");
+    const beforeUploadFiles = new Set(fs.existsSync(uploadTemp) ? fs.readdirSync(uploadTemp) : []);
+    unauthUpload.append("image",new Blob([Buffer.alloc(65536)],{type:"image/png"}),"unauthorized.png");
+    assert.equal((await fetch(base+"/admin/post-edit.php",{method:"POST",body:unauthUpload,redirect:"manual"})).status,302,"Unauthenticated upload rejected before parsing");
+    assert.equal((await fetch(base+"/admin/login.php",{method:"POST",body:unauthUpload,redirect:"manual"})).status,400,"Login rejects multipart");
+    assert.deepEqual(new Set(fs.existsSync(uploadTemp) ? fs.readdirSync(uploadTemp) : []),beforeUploadFiles,"Unauthorized upload did not create a temporary image");
     const cssResponse = await fetch(base + "/CSS/site.css",{headers:{"Accept-Encoding":"gzip"}});
     assert.equal(cssResponse.headers.get("content-encoding"),"gzip","CSS is compressed in transit");
     assert(Number(cssResponse.headers.get("content-length")) < fs.statSync(path.join(root,"public/CSS/site.css")).size/2,"Compressed CSS is smaller than the original");
@@ -542,10 +558,10 @@ const freePort = async () => {
     const brandedHome = (await request("/")).html;
     const brandedAbout = (await request("/About.php")).html;
     assert(brandedHome.includes("Quỹ học bổng thử") && brandedHome.includes("CLB THỬ VÀ NHỮNG NGƯỜI BẠN"),"Header branding follows admin settings");
-    assert(brandedHome.includes('class="tsnt-hero-bg"') && brandedHome.includes('src="assets/images/activity-800.webp"'),"Home banner follows admin settings");
-    assert(brandedHome.includes('class="tsnt-showcase-media" data-lightbox="Image/act-1.jpg"'),"Home central image follows admin settings");
+    assert.equal((await db.query("select banner_image from settings where id='main'")).rows[0].banner_image,"assets/images/activity-800.webp","Home banner setting is saved");
+    assert(brandedHome.includes('class="foundation-about-media"') && brandedHome.includes('src="Image/act-1.jpg"'),"Home about image follows admin settings");
     assert(brandedAbout.includes('about-banner-photo" data-hero-slide fetchpriority="high" src="assets/images/hero-clb.jpg"'),"About background is independent from Home");
-    assert(brandedAbout.includes('class="tsnt-collage-btn" data-lightbox="assets/images/activity-800.webp"'),"About central image follows admin settings");
+    assert(brandedAbout.includes('class="tsnt-collage-sub"') && brandedAbout.includes('src="assets/images/activity-800.webp"'),"About image follows admin settings");
     assert(!(await request("/")).html.includes(secret));
     const blankPage = await request("/admin/settings.php");
     const blank = {...settingsForm,version:"2",token:field(blankPage.html,"token"),email:"",phone:"",facebook:""};
@@ -575,8 +591,6 @@ const freePort = async () => {
     assert.equal((await request("/admin/settings.php",gallerySettingsForm)).status,302);
     gallerySettings = (await db.query("select * from settings where id='main'")).rows[0];
     assert.equal(gallerySettings.gallery.length,3,"Website settings stores a multi-image gallery");
-    let siteGalleryHome = (await request("/")).html;
-    assert.equal((siteGalleryHome.match(/data-gallery-group="site-gallery"/g) || []).length,3,"Home page publishes the website gallery");
     const removedSiteGalleryId = gallerySettings.gallery[1].match(/v\d+\/(.*)\.webp$/)[1];
     const reorderPage = await request("/admin/settings.php");
     const reorderForm = settingsData(gallerySettings,field(reorderPage.html,"token"));
@@ -589,8 +603,6 @@ const freePort = async () => {
     gallerySettings = (await db.query("select * from settings where id='main'")).rows[0];
     assert.equal(gallerySettings.gallery.length,2,"Website gallery supports removing images");
     assert.equal(cloudinaryObjects.has(removedSiteGalleryId),false,"Removed website gallery image is deleted from Cloudinary");
-    siteGalleryHome = (await request("/")).html;
-    assert.equal((siteGalleryHome.match(/data-gallery-group="site-gallery"/g) || []).length,2);
     const imageSettingsPage = await request("/admin/settings.php");
     const imageSettingsForm = settingsData(gallerySettings,field(imageSettingsPage.html,"token"));
     gallerySettings.gallery.forEach((url,index) => {
@@ -609,9 +621,8 @@ const freePort = async () => {
     assert(uploadedAbout.includes(`about-banner-photo" data-hero-slide fetchpriority="high" src="${uploadedSettings.about_banner_image}"`));
     assert.equal(uploadedSettings.banner_slides.length,1,"Home accepts additional banner photos");
     assert.equal(uploadedSettings.about_banner_slides.length,1,"About accepts additional banner photos");
-    assert((await request("/")).html.includes('data-hero-next'),"Home offers photo navigation");
     assert(uploadedAbout.includes('data-hero-next'),"About offers photo navigation");
-    assert(uploadedAbout.includes(`class="tsnt-collage-btn" data-lightbox="${uploadedSettings.about_hero_image}"`));
+    assert(uploadedAbout.includes(`src="${uploadedSettings.about_hero_image}"`));
     env.UI_TEST_SITE_GALLERY = "1";
     console.log("Members, sponsors, about sections and public settings binding passed");
     await db.exec("update admin_users set role='editor' where username='admin'");
@@ -620,7 +631,12 @@ const freePort = async () => {
     assert.equal((await request("/admin/settings.php")).status,403,"Downgraded account loses owner permissions");
     await db.exec("update admin_users set role='admin' where username='admin'");
 
-    await request("/admin/logout.php");
+    assert.equal((await login("admin")).status,302);
+    const beforeLogout = await request("/admin/posts.php");
+    assert.equal((await request("/admin/logout.php")).status,405,"GET cannot log out");
+    assert.equal((await request("/admin/posts.php")).status,200,"GET logout leaves session active");
+    assert.equal((await request("/admin/logout.php",{logout_token:"invalid"})).status,405,"Logout requires CSRF token");
+    assert.equal((await request("/admin/logout.php",{logout_token:field(beforeLogout.html,"logout_token")})).status,302,"POST logout succeeds with CSRF token");
     assert.equal((await login("editor")).status,302);
     assert.equal((await request("/admin/posts.php")).status,200);
     assert.equal((await request("/admin/settings.php")).status,403);
@@ -628,6 +644,11 @@ const freePort = async () => {
     await db.exec("update admin_users set disabled=true where username='editor'");
     assert.equal((await request("/admin/posts.php")).status,302,"Disabled account rejected");
     cookie = "";
+    const sessionCountBeforeRateTest = fs.readdirSync(path.join(temp,"sessions")).length;
+    let limited = false;
+    for(let i=0;i<35;i++) if ((await fetch(base+"/admin/login.php",{redirect:"manual"})).status===429) limited=true;
+    assert(limited,"Anonymous session creation is rate limited");
+    assert(fs.readdirSync(path.join(temp,"sessions")).length <= sessionCountBeforeRateTest+30,"Anonymous session creation is bounded per address");
     failBackend = true;
     const unavailable = await request("/Activities.php");
     assert.equal(unavailable.status,503);

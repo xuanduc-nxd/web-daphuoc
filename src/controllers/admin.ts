@@ -28,7 +28,7 @@ export async function adminRoute(
   session: Session,
   remoteAddress: string,
 ): Promise<RouteResult> {
-  if (page === 'logout.php') return handleLogout(session);
+  if (page === 'logout.php') return handleLogout(method, form, session);
   if (page === 'login.php') return handleLogin(method, form, session, remoteAddress);
 
   if (!(await requireAdmin(session))) return { location: 'login.php' };

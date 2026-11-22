@@ -68,7 +68,8 @@
   overflow-y: auto;
 }
 .admin-sidebar nav a,
-.sidebar-bottom a {
+.sidebar-bottom a,
+.sidebar-bottom button {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -80,13 +81,21 @@
   color: #c8daea;
   transition: background-color 0.18s, color 0.18s;
 }
+.sidebar-bottom button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
 .admin-sidebar nav a.active {
   background: #2b597c;
   color: #ffffff;
   font-weight: 700;
 }
 .admin-sidebar nav a:hover,
-.sidebar-bottom a:hover {
+.sidebar-bottom a:hover,
+.sidebar-bottom button:hover {
   background: #244b6b;
   color: #ffffff;
 }

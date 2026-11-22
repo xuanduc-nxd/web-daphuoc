@@ -1,6 +1,8 @@
 import { icon } from '../../public/components.ts';
+import { type Session } from '../../../core/http.ts';
 
-export function renderAdminSidebar(page: string, role?: string, section?: string): string {
+export function renderAdminSidebar(page: string, session: Session, section?: string): string {
+  const role = session.data.admin_role;
   const active = section || (
     page === 'post-edit.php' ? 'posts.php' : page
   );
@@ -27,7 +29,7 @@ export function renderAdminSidebar(page: string, role?: string, section?: string
     </nav>
     <div class="sidebar-bottom">
       <a href="../" target="_blank" rel="noopener noreferrer">${icon('arrow-square-out')} Xem website</a>
-      <a href="logout.php">${icon('sign-out')} Đăng xuất</a>
+      <form action="logout.php" method="post"><input type="hidden" name="logout_token" value="${session.token()}"><button type="submit">${icon('sign-out')} Đăng xuất</button></form>
     </div>
   </aside>
   <div class="admin-backdrop" data-admin-backdrop hidden></div>`;

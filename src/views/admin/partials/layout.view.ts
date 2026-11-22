@@ -28,7 +28,7 @@ export function adminFrame(
 <body class="admin-body">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <div class="admin-shell">
-    ${renderAdminSidebar(page, session.data.admin_role, section)}
+    ${renderAdminSidebar(page, session, section)}
     <main class="admin-main" id="main-content">
       ${renderAdminTopbar(title, session)}
       ${flash ? `<div class="flash ${e(flash.type)}" role="${flash.type === 'error' ? 'alert' : 'status'}">${e(flash.message)}</div>` : ''}

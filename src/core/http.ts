@@ -5,8 +5,9 @@ import { tmpdir } from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
+import { Transform } from 'node:stream';
 import Busboy from 'busboy';
-import { ROOT, InputError } from './config.ts';
+import { ROOT, InputError, RateLimitError } from './config.ts';
 
 export interface Upload { field: string; name: string; mime: string; path: string; size: number; }
 export interface Form { fields: Record<string, string[]>; files: Record<string, Upload[]>; cleanup: () => void; }
@@ -18,8 +19,8 @@ export const checked = (form: Form, name: string) => Boolean(form.fields[name]?.
 const uploadTemp = resolve(tmpdir(), 'clb-golf-upload');
 
 export async function parseForm(req: IncomingMessage): Promise<Form> {
-  const fields: Record<string,string[]> = {};
-  const uploads: Record<string,Upload[]> = {};
+  const fields: Record<string,string[]> = Object.create(null);
+  const uploads: Record<string,Upload[]> = Object.create(null);
   const tempPaths: string[] = [];
   const cleanup = () => { for (const path of tempPaths) { try { unlinkSync(path); } catch {} } };
   const type = String(req.headers['content-type'] || '');
@@ -34,6 +35,11 @@ export async function parseForm(req: IncomingMessage): Promise<Form> {
   if (Number(req.headers['content-length'] || 0) > 210 * 1024 * 1024) throw new InputError('Tổng dung lượng biểu mẫu vượt giới hạn 210 MB.');
   mkdirSync(uploadTemp, {recursive:true});
   const parser = Busboy({ headers: req.headers, limits: { files: 25, fileSize: 10 * 1024 * 1024 + 1, fields: 200, fieldSize: 1024 * 1024, parts: 250 } });
+  let received = 0;
+  const limit = new Transform({ transform(chunk: Buffer, _encoding, callback) {
+    received += chunk.length;
+    callback(received > 210 * 1024 * 1024 ? new InputError('Tổng dung lượng biểu mẫu vượt giới hạn 210 MB.') : null, chunk);
+  } });
   const tasks: Promise<void>[] = [];
   let failed: Error | undefined;
   parser.on('field', (name, text, info) => { if (info.valueTruncated) failed = new InputError('Trường nội dung quá dài.'); (fields[name] ||= []).push(text); });
@@ -52,7 +58,7 @@ export async function parseForm(req: IncomingMessage): Promise<Form> {
   parser.on('fieldsLimit', () => { failed = new InputError('Biểu mẫu có quá nhiều trường.'); });
   parser.on('partsLimit', () => { failed = new InputError('Biểu mẫu có quá nhiều phần.'); });
   try {
-    await new Promise<void>((resolveDone,reject) => { parser.on('close',resolveDone); parser.on('error',reject); req.pipe(parser); });
+    await new Promise<void>((resolveDone,reject) => { parser.on('close',resolveDone); parser.on('error',reject); limit.on('error',reject); req.on('aborted', () => reject(new InputError('Tải lên bị gián đoạn.'))); req.pipe(limit).pipe(parser); });
     await Promise.all(tasks);
     if (failed) throw failed;
     return {fields,files:uploads,cleanup};
@@ -61,6 +67,8 @@ export async function parseForm(req: IncomingMessage): Promise<Form> {
 
 export interface SessionData { admin_id?: string; admin_version?: number; admin_role?: string; admin_username?: string; admin_last_active?: number; token?: string; team_token?: string; post_status_token?: string; flash?: {message:string,type:string}; }
 const sessionDir = process.env.APP_SESSION_DIR || resolve(ROOT, '.runtime', 'sessions');
+const anonymousSessions = new Map<string, { count: number; since: number }>();
+let totalAnonymousSessions = { count: 0, since: Date.now() };
 mkdirSync(sessionDir,{recursive:true});
 setInterval(() => {
   for (const name of readdirSync(sessionDir)) {
@@ -72,12 +80,13 @@ setInterval(() => {
 export class Session {
   id: string;
   data: SessionData;
-  constructor(id: string, data: SessionData) { this.id=id; this.data=data; }
+  isNew: boolean;
+  constructor(id: string, data: SessionData, isNew = true) { this.id=id; this.data=data; this.isNew=isNew; }
   static open(req: IncomingMessage): Session {
     const cookie = String(req.headers.cookie || '').split(';').map(x => x.trim()).find(x => x.startsWith('clb_sid='));
     const id = cookie?.slice(8) || '';
     if (/^[a-f0-9]{64}$/.test(id)) {
-      try { return new Session(id,JSON.parse(readFileSync(resolve(sessionDir,id),'utf8'))); } catch {}
+      try { return new Session(id,JSON.parse(readFileSync(resolve(sessionDir,id),'utf8')),false); } catch {}
     }
     return new Session(randomBytes(32).toString('hex'),{});
   }
@@ -92,8 +101,24 @@ export class Session {
   regenerate(): void { this.destroy(); this.id = randomBytes(32).toString('hex'); }
   destroy(): void { try { unlinkSync(resolve(sessionDir,this.id)); } catch {} this.data = {}; }
   save(res: ServerResponse, req: IncomingMessage): void {
+    if (this.isNew && !this.data.admin_id) {
+      if (!Object.keys(this.data).length) return;
+      const now = Date.now();
+      const address = req.socket.remoteAddress || 'unknown';
+      if (now - totalAnonymousSessions.since > 15 * 60_000) {
+        totalAnonymousSessions = { count: 0, since: now };
+        anonymousSessions.clear();
+      }
+      const current = anonymousSessions.get(address);
+      const attempt = !current || now - current.since > 15 * 60_000 ? { count: 0, since: now } : current;
+      if (attempt.count >= 30 || totalAnonymousSessions.count >= 1000) throw new RateLimitError('Quá nhiều phiên đăng nhập. Vui lòng thử lại sau.');
+      attempt.count++;
+      totalAnonymousSessions.count++;
+      anonymousSessions.set(address, attempt);
+    }
     const tmp = resolve(sessionDir,`${this.id}.${randomBytes(4).toString('hex')}.tmp`);
     writeFileSync(tmp,JSON.stringify(this.data),{mode:0o600}); renameSync(tmp,resolve(sessionDir,this.id));
+    this.isNew = false;
     const secure = 'encrypted' in req.socket || String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
     res.setHeader('Set-Cookie',`clb_sid=${this.id}; Path=/; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`);
     res.setHeader('Cache-Control','no-store');
