@@ -7,7 +7,7 @@ export async function loadStudentsPageData(data: PublicPageModel, page: number, 
     data.rows = student ? [student] : [];
     return;
   }
-  const result = await publicStudentsPage(page, 10);
+  const result = await publicStudentsPage(page, 9);
   data.rows = result.rows;
   data.studentTotal = result.total;
 }

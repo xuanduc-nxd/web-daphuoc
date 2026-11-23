@@ -514,6 +514,50 @@
     startAuto();
   });
 
+  const initStudentDirectory = () => {
+    const root = document.querySelector("[data-student-directory]");
+    if (!root) return;
+    const cards = [...root.querySelectorAll("[data-student-card]")];
+    const search = root.querySelector("[data-student-search]");
+    const major = root.querySelector("[data-student-major]");
+    const school = root.querySelector("[data-student-school]");
+    const sort = root.querySelector("[data-student-sort]");
+    const grid = root.querySelector(".student-grid");
+    const status = root.querySelector("[data-student-status]");
+    const emptyState = root.querySelector("[data-student-empty]");
+    const pagination = root.querySelector("[data-student-pagination]");
+    if (!search || !major || !school || !sort || !grid || !status || !emptyState || !pagination) return;
+
+    const update = () => {
+      const query = normalize(search.value);
+      const selectedMajor = normalize(major.value);
+      const selectedSchool = normalize(school.value);
+      const filtered = cards.filter((card) =>
+        normalize(card.dataset.search).includes(query) &&
+        (!selectedMajor || normalize(card.dataset.major) === selectedMajor) &&
+        (!selectedSchool || normalize(card.dataset.school) === selectedSchool)
+      );
+      const mode = sort.value;
+      const ordered = [...filtered].sort((a, b) =>
+        mode === "name" ? a.dataset.name.localeCompare(b.dataset.name, "vi") :
+          mode === "school" ? a.dataset.school.localeCompare(b.dataset.school, "vi") :
+            cards.indexOf(a) - cards.indexOf(b)
+      );
+      ordered.forEach((card) => { card.hidden = false; grid.append(card); });
+      cards.filter((card) => !filtered.includes(card)).forEach((card) => { card.hidden = true; grid.append(card); });
+      root.querySelector("[data-student-count]").textContent = String(
+        query || selectedMajor || selectedSchool ? filtered.length : root.querySelector("[data-student-count]").dataset.total
+      );
+      status.textContent = query || selectedMajor || selectedSchool
+        ? `Hiển thị ${filtered.length} trên ${cards.length} sinh viên trong trang này`
+        : "";
+      emptyState.hidden = filtered.length > 0;
+      pagination.hidden = Boolean(query || selectedMajor || selectedSchool || mode !== "default");
+    };
+    search.addEventListener("input", update);
+    [major, school, sort].forEach((control) => control.addEventListener("change", update));
+  };
+
   const initScrollEnhancements = () => {
     const header = document.querySelector(".site-header");
 
@@ -658,5 +702,6 @@
     targets.forEach((el) => observer.observe(el));
   };
 
+  initStudentDirectory();
   initScrollEnhancements();
 })();

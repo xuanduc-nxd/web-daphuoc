@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderStudentsPage } from '../../src/views/public/pages/students.view.ts';
 
-test('student directory renders name, school, major and profile link without photos or initials', () => {
+test('student directory renders the scholarship hero, initials avatar, public fields and profile link', () => {
   const rows = [
     {
       id: 's1',
@@ -17,6 +17,7 @@ test('student directory renders name, school, major and profile link without pho
 
   // Contains approved public fields
   assert(html.includes('Hỗ trợ sinh viên'));
+  assert(html.includes('href="#chuong-trinh">Tìm hiểu chương trình</a>'));
   assert(html.includes('Nguyễn Văn A'));
   assert(html.includes('ĐH Bách Khoa'));
   assert(html.includes('Công nghệ thông tin'));
@@ -25,10 +26,11 @@ test('student directory renders name, school, major and profile link without pho
   assert(html.includes('href="Students.php?id=s1"'));
   assert(html.includes('Xem hồ sơ'));
 
-  // Text-only: NO photos and NO initials avatar
-  assert(!html.includes('<img'));
+  // The hero and student cards use the requested scholarship presentation.
+  assert(html.includes('Tiếp sức hôm nay.'));
+  assert(html.includes('class="student-avatar"'));
+  assert(html.includes('>NA</div>'));
   assert(!html.includes('student-initial'));
-  assert(!html.includes('avatar'));
 });
 
 test('student directory handles missing fields (school, major)', () => {
@@ -46,8 +48,8 @@ test('student directory handles missing fields (school, major)', () => {
   assert(!html.includes('null'));
   // Missing fields display fallback or dash
   assert(html.includes('student-muted'));
-  assert(!html.includes('<img'));
-  assert(!html.includes('student-initial'));
+  assert(html.includes('class="student-avatar"'));
+  assert(html.includes('>TB</div>'));
 });
 
 test('student directory escapes HTML in name, school, and major', () => {
@@ -75,7 +77,7 @@ test('student directory handles empty student list', () => {
   assert(!html.includes('student-pagination'));
 });
 
-test('student directory paginates with 10 items per page', () => {
+test('student directory paginates with at most 9 items per page', () => {
   const rows = Array.from({ length: 25 }, (_, i) => ({
     id: `student-${i + 1}`,
     name: `Sinh viên thứ ${i + 1}`,
@@ -84,9 +86,10 @@ test('student directory paginates with 10 items per page', () => {
   }));
 
   // Page 1
-  const page1 = renderStudentsPage(rows.slice(0, 10), 1, '', rows.length);
+  const page1 = renderStudentsPage(rows.slice(0, 9), 1, '', rows.length);
   assert(page1.includes('Sinh viên thứ 1'));
-  assert(page1.includes('Sinh viên thứ 10'));
+  assert(page1.includes('Sinh viên thứ 9'));
+  assert(!page1.includes('Sinh viên thứ 10'));
   assert(!page1.includes('Sinh viên thứ 11'));
   assert(page1.includes('aria-label="Các trang sinh viên"'));
   assert(page1.includes('href="Students.php?page=1"'));
@@ -94,15 +97,15 @@ test('student directory paginates with 10 items per page', () => {
   assert(page1.includes('href="Students.php?page=3"'));
 
   // Page 2
-  const page2 = renderStudentsPage(rows.slice(10, 20), 2, '', rows.length);
-  assert(!page2.includes('Sinh viên thứ 10'));
-  assert(page2.includes('Sinh viên thứ 11'));
-  assert(page2.includes('Sinh viên thứ 20'));
-  assert(!page2.includes('Sinh viên thứ 21'));
+  const page2 = renderStudentsPage(rows.slice(9, 18), 2, '', rows.length);
+  assert(page2.includes('Sinh viên thứ 10'));
+  assert(page2.includes('Sinh viên thứ 18'));
+  assert(!page2.includes('Sinh viên thứ 19'));
 
   // Page 3
-  const page3 = renderStudentsPage(rows.slice(20), 3, '', rows.length);
+  const page3 = renderStudentsPage(rows.slice(18), 3, '', rows.length);
   assert(page3.includes('Sinh viên thứ 25'));
+  assert(page3.includes('Sinh viên thứ 19'));
   assert(page3.includes('Sinh viên thứ 24'));
 });
 

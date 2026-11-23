@@ -29,7 +29,7 @@ export async function publicStudents(): Promise<Row[]> {
   return select('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'id,name,direction,school,major,expertise');
 }
 
-export async function publicStudentsPage(page = 1, pageSize = 10): Promise<{ rows: Row[]; total: number }> {
+export async function publicStudentsPage(page = 1, pageSize = 9): Promise<{ rows: Row[]; total: number }> {
   const currentPage = Math.max(1, Math.floor(page));
   const size = Math.max(1, Math.min(50, Math.floor(pageSize)));
   const offset = (currentPage - 1) * size;
