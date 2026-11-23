@@ -23,24 +23,75 @@ function studentCard(row: Row): string {
   </article>`;
 }
 
-function profile(row: Row): string {
+function profileSection(title: string, symbol: string, content: string): string {
+  return `<section class="student-profile-section"><span class="student-profile-section-icon" aria-hidden="true">${icon(symbol)}</span><div class="student-profile-section-content"><h2>${e(title)}</h2>${content}</div></section>`;
+}
+
+function profile(row: Row, roster: Row[]): string {
+  const name = String(row.name || 'Sinh viên').trim();
+  const school = String(row.school || '').trim();
+  const major = String(row.major || '').trim();
+  const direction = String(row.direction || '').trim();
+  const expertise = String(row.expertise || '').trim();
+  const initialsText = initials(name);
+  const studentIndex = roster.findIndex(student => String(student.id) === String(row.id));
+  const previous = studentIndex > 0 ? roster[studentIndex - 1] : null;
+  const next = studentIndex >= 0 && studentIndex < roster.length - 1 ? roster[studentIndex + 1] : null;
   const sections = [
-    ['Trường và ngành học', [row.school, row.major].filter(Boolean).join(' · ')],
-    ['Định hướng phát triển', row.direction],
-    ['Lĩnh vực quan tâm', row.expertise],
+    school || major ? profileSection('Trường và ngành học', 'graduation-cap', `${school ? `<p>${e(school)}</p>` : ''}${major ? `<span class="student-profile-tag">${icon('notebook')} ${e(major)}</span>` : ''}`) : '',
+    direction ? profileSection('Định hướng phát triển', 'arrows-out', `<p class="student-profile-preserve-lines">${e(direction).replace(/\r?\n/g, '<br>')}</p>`) : '',
+    expertise ? profileSection('Lĩnh vực quan tâm', 'squares-four', `<p class="student-profile-preserve-lines">${e(expertise).replace(/\r?\n/g, '<br>')}</p>`) : '',
+  ].filter(Boolean).join('');
+  const quickRows = [
+    ['Họ và tên', name, 'user-circle'],
+    ['Trường', school, 'graduation-cap'],
+    ['Ngành học', major, 'notebook'],
+    ['Chương trình', 'Hỗ trợ sinh viên', 'hand-heart'],
   ].filter(([, value]) => Boolean(value));
-  return `<main id="main-content" class="container listing-main student-profile">
-    ${breadcrumb('Hỗ trợ sinh viên')}
-    <a class="student-back" href="Students.php">${icon('arrow-left')} Danh sách sinh viên</a>
-    <header class="student-profile-head"><div><p class="eyebrow">Gương mặt sinh viên</p><h1>${e(row.name)}</h1></div></header>
-    ${sections.map(([title, value]) => `<section class="student-profile-section"><h2>${e(title)}</h2><p>${e(value).replace(/\n/g, '<br>')}</p></section>`).join('')}
+  return `<main id="main-content" class="student-profile-page">
+    <div class="container student-profile-top">
+      ${breadcrumb('Hồ sơ sinh viên', 'Hỗ trợ sinh viên', 'Students.php')}
+      <a class="student-back" href="Students.php">${icon('arrow-left')} Danh sách sinh viên</a>
+    </div>
+    <article class="container student-profile-card" aria-labelledby="student-profile-name">
+      <header class="student-profile-hero">
+        <div class="student-profile-avatar" aria-label="Chữ viết tắt ${e(initialsText)}">${e(initialsText)}</div>
+        <div class="student-profile-identity"><p class="student-profile-eyebrow">GƯƠNG MẶT SINH VIÊN</p><h1 id="student-profile-name">${e(name)}</h1></div>
+      </header>
+      <div class="student-profile-body">
+        <div class="student-profile-details">
+          ${sections || `<p class="student-profile-no-details">Thông tin chi tiết đang được cập nhật.</p>`}
+        </div>
+        <aside class="student-profile-aside" aria-label="Thông tin sinh viên">
+          <section class="student-profile-panel">
+            <h2>${icon('info')} Thông tin nhanh</h2>
+            <dl>${quickRows.map(([label, value, symbol]) => `<div class="student-profile-quick-row"><dt>${icon(symbol)}<span>${e(label)}</span></dt><dd>${e(value)}</dd></div>`).join('')}</dl>
+          </section>
+          <section class="student-profile-panel student-profile-contact">
+            <h2>${icon('phone')} Liên hệ</h2>
+            <p>${icon('info')} Thông tin liên hệ chưa được công khai.</p>
+          </section>
+        </aside>
+      </div>
+      <section class="student-profile-support">
+        <span class="student-profile-support-icon" aria-hidden="true">${icon('hand-heart')}</span>
+        <div><h2>Cùng tiếp sức cho hành trình tri thức</h2><p>Mỗi sự đồng hành góp phần mở thêm cơ hội học tập và phát triển cho sinh viên.</p></div>
+      </section>
+      <nav class="student-profile-navigation" aria-label="Điều hướng hồ sơ sinh viên">
+        <a class="student-profile-nav-button" href="Students.php">${icon('arrow-left')} Quay lại danh sách</a>
+        <div class="student-profile-nav-neighbors">
+          ${previous ? `<a class="student-profile-nav-button" href="Students.php?id=${encodeURIComponent(String(previous.id))}">${icon('arrow-left')} Sinh viên trước</a>` : `<span class="student-profile-nav-button is-disabled" aria-disabled="true">${icon('arrow-left')} Sinh viên trước</span>`}
+          ${next ? `<a class="student-profile-nav-button" href="Students.php?id=${encodeURIComponent(String(next.id))}">Sinh viên tiếp theo ${icon('arrow-right')}</a>` : `<span class="student-profile-nav-button is-disabled" aria-disabled="true">Sinh viên tiếp theo ${icon('arrow-right')}</span>`}
+        </div>
+      </nav>
+    </article>
   </main>`;
 }
 
-export function renderStudentsPage(rows: Row[], page = 1, studentId = '', total = rows.length): string {
+export function renderStudentsPage(rows: Row[], page = 1, studentId = '', total = rows.length, roster: Row[] = rows): string {
   if (studentId) {
     const student = rows.find(row => String(row.id) === studentId);
-    return student ? profile(student) : `<main id="main-content" class="container listing-main">${breadcrumb('Hỗ trợ sinh viên')}${empty('Không tìm thấy sinh viên', 'Hồ sơ này hiện không có trong danh sách công khai.', 'graduation-cap')}<a class="button primary" href="Students.php">Về danh sách sinh viên</a></main>`;
+    return student ? profile(student, roster) : `<main id="main-content" class="container listing-main">${breadcrumb('Hỗ trợ sinh viên')}${empty('Không tìm thấy sinh viên', 'Hồ sơ này hiện không có trong danh sách công khai.', 'graduation-cap')}<a class="button primary" href="Students.php">Về danh sách sinh viên</a></main>`;
   }
 
   const pageSize = 9;
@@ -63,8 +114,8 @@ export function renderStudentsPage(rows: Row[], page = 1, studentId = '', total 
 
     <section class="container student-program" id="chuong-trinh" aria-label="Thông tin chương trình hỗ trợ">
       <article class="student-program-item"><span class="student-program-icon">${icon('graduation-cap')}</span><div><h2>Đối tượng hỗ trợ</h2><p>Sinh viên có hoàn cảnh khó khăn, có tinh thần vươn lên trong học tập.</p></div></article>
-      <article class="student-program-item"><span class="student-program-icon">${icon('handshake')}</span><div><h2>Hình thức hỗ trợ</h2><p>Học bổng, hỗ trợ chi phí học tập, định hướng phát triển và các hoạt động đồng hành phù hợp.</p></div></article>
-      <article class="student-program-item"><span class="student-program-icon">${icon('chart-line-up')}</span><div><h2>Giá trị mang lại</h2><p>Tiếp thêm động lực, mở rộng cơ hội học tập và xây dựng kết nối với cộng đồng.</p></div></article>
+      <article class="student-program-item"><span class="student-program-icon">${icon('hand-heart')}</span><div><h2>Hình thức hỗ trợ</h2><p>Học bổng, hỗ trợ chi phí học tập, định hướng phát triển và các hoạt động đồng hành phù hợp.</p></div></article>
+      <article class="student-program-item"><span class="student-program-icon">${icon('share-network')}</span><div><h2>Giá trị mang lại</h2><p>Tiếp thêm động lực, mở rộng cơ hội học tập và xây dựng kết nối với cộng đồng.</p></div></article>
     </section>
 
     <section class="container student-directory listing-main" id="sinh-vien" aria-labelledby="student-list-title" data-student-directory>

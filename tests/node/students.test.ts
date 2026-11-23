@@ -109,7 +109,7 @@ test('student directory paginates with at most 9 items per page', () => {
   assert(page3.includes('Sinh viên thứ 24'));
 });
 
-test('student profile displays development direction and areas of interest without photo or initials', () => {
+test('student profile renders the full public profile layout and preserves the supplied details', () => {
   const rows = [
     {
       id: 'profile-1',
@@ -123,8 +123,9 @@ test('student profile displays development direction and areas of interest witho
   const html = renderStudentsPage(rows, 1, 'profile-1');
 
   // Eyebrow and heading
-  assert(html.includes('Gương mặt sinh viên'));
-  assert(html.includes('<h1>Lê Hoàng Nam</h1>'));
+  assert(html.includes('GƯƠNG MẶT SINH VIÊN'));
+  assert(html.includes('<h1 id="student-profile-name">Lê Hoàng Nam</h1>'));
+  assert(html.includes('class="student-profile-avatar" aria-label="Chữ viết tắt LN">LN</div>'));
 
   // Back link
   assert(html.includes('href="Students.php"'));
@@ -132,16 +133,18 @@ test('student profile displays development direction and areas of interest witho
 
   // Sections
   assert(html.includes('Trường và ngành học'));
-  assert(html.includes('ĐH Khoa học Tự nhiên · Khoa học máy tính'));
+  assert(html.includes('ĐH Khoa học Tự nhiên'));
+  assert(html.includes('Khoa học máy tính'));
   assert(html.includes('Định hướng phát triển'));
   assert(html.includes('Mục tiêu trở thành chuyên gia xử lý ngôn ngữ tự nhiên<br>Đóng góp cho cộng đồng mã nguồn mở'));
   assert(html.includes('Lĩnh vực quan tâm'));
   assert(html.includes('Trí tuệ nhân tạo, Xử lý ảnh'));
 
-  // Text-only: NO photo and NO initials avatar
+  // No private profile image or contact information is exposed.
   assert(!html.includes('<img'));
-  assert(!html.includes('student-initial'));
-  assert(!html.includes('avatar'));
+  assert(html.includes('Thông tin nhanh'));
+  assert(html.includes('Thông tin liên hệ chưa được công khai'));
+  assert(html.includes('Cùng tiếp sức cho hành trình tri thức'));
 });
 
 test('student profile handles missing ID gracefully', () => {
@@ -152,6 +155,25 @@ test('student profile handles missing ID gracefully', () => {
   assert(html.includes('Không tìm thấy sinh viên'));
   assert(html.includes('Về danh sách sinh viên'));
   assert(html.includes('href="Students.php"'));
+});
+
+test('student profile links to valid previous and next students in public order', () => {
+  const roster = [
+    { id: 's1', name: 'Sinh viên 1' },
+    { id: 's2', name: 'Sinh viên 2' },
+    { id: 's3', name: 'Sinh viên 3' },
+  ];
+  const middle = renderStudentsPage([roster[1]], 1, 's2', roster.length, roster);
+  assert(middle.includes('href="Students.php?id=s1"'));
+  assert(middle.includes('href="Students.php?id=s3"'));
+
+  const first = renderStudentsPage([roster[0]], 1, 's1', roster.length, roster);
+  assert(first.includes('Sinh viên trước</span>'));
+  assert(first.includes('href="Students.php?id=s2"'));
+
+  const last = renderStudentsPage([roster[2]], 1, 's3', roster.length, roster);
+  assert(last.includes('href="Students.php?id=s2"'));
+  assert(last.includes('Sinh viên tiếp theo <i'));
 });
 
 test('student directory and profile never expose private support needs, notes, or contact info', () => {
