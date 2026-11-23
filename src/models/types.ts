@@ -20,6 +20,7 @@ export interface PublicPageModel {
   sponsors?: Row[];
   students?: Row[];
   studentPage?: number;
+  studentTotal?: number;
   studentId?: string;
   blogs?: Row[];
   article?: Row | null;

@@ -40,16 +40,16 @@ function profile(row: Row): string {
   </main>`;
 }
 
-export function renderStudentsPage(rows: Row[], page = 1, studentId = ''): string {
+export function renderStudentsPage(rows: Row[], page = 1, studentId = '', total = rows.length): string {
   if (studentId) {
     const student = rows.find(row => String(row.id) === studentId);
     return student ? profile(student) : `<main id="main-content" class="container listing-main">${breadcrumb('Hỗ trợ sinh viên')}${empty('Không tìm thấy sinh viên', 'Hồ sơ này hiện không có trong danh sách công khai.', 'graduation-cap')}<a class="button primary" href="Students.php">Về danh sách sinh viên</a></main>`;
   }
 
-  const pageSize = 12;
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const pageSize = 10;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   const current = Math.min(Math.max(1, page), pages);
-  const visible = rows.slice((current - 1) * pageSize, current * pageSize);
+  const visible = rows;
   return `<main id="main-content" class="container listing-main student-directory">
     ${breadcrumb('Hỗ trợ sinh viên')}
     ${heading('Hỗ trợ sinh viên', 'Những sinh viên được CLB đồng hành trên hành trình phát triển tri thức và nghề nghiệp.', 'graduation-cap')}
@@ -61,9 +61,11 @@ export function renderStudentsPage(rows: Row[], page = 1, studentId = ''): strin
            <span class="student-head-action">Hồ sơ</span>
          </div>
          <div class="student-grid">${visible.map(studentCard).join('')}</div>
-         ${pages > 1 ? `<nav class="student-pagination" aria-label="Các trang sinh viên">
+         <nav class="student-pagination" aria-label="Các trang sinh viên">
+           ${current === 1 ? '<span aria-disabled="true">Trước</span>' : `<a href="Students.php?page=${current - 1}">Trước</a>`}
            ${Array.from({ length: pages }, (_, index) => `<a href="Students.php?page=${index + 1}" ${current === index + 1 ? 'aria-current="page"' : ''}>${index + 1}</a>`).join('')}
-         </nav>` : ''}`
+           ${current === pages ? '<span aria-disabled="true">Sau</span>' : `<a href="Students.php?page=${current + 1}">Sau</a>`}
+         </nav>`
       : empty('Thông tin sinh viên đang được cập nhật', 'Theo dõi chương trình học bổng trong thời gian tới.', 'graduation-cap')}
   </main>`;
 }

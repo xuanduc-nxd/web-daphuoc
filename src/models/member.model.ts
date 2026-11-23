@@ -1,5 +1,5 @@
 import { InputError, type Row } from '../core/config.ts';
-import { select } from './supabase.ts';
+import { select, selectPage } from './supabase.ts';
 import { previewMode, previewRows } from './repository.ts';
 
 export async function members(type?: string): Promise<Row[]> {
@@ -27,4 +27,26 @@ export async function publicStudents(): Promise<Row[]> {
   }
 
   return select('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'id,name,direction,school,major,expertise');
+}
+
+export async function publicStudentsPage(page = 1, pageSize = 10): Promise<{ rows: Row[]; total: number }> {
+  const currentPage = Math.max(1, Math.floor(page));
+  const size = Math.max(1, Math.min(50, Math.floor(pageSize)));
+  const offset = (currentPage - 1) * size;
+  if (previewMode()) {
+    const rows = await publicStudents();
+    return { rows: rows.slice(offset, offset + size), total: rows.length };
+  }
+  const result = await selectPage('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'id,name,direction,school,major,expertise', offset, size);
+  if (!result.rows.length && result.total && offset >= result.total) {
+    const lastOffset = (Math.ceil(result.total / size) - 1) * size;
+    return selectPage('members', { type: 'eq.student' }, 'sort_order.asc,id.asc', 'id,name,direction,school,major,expertise', lastOffset, size);
+  }
+  return result;
+}
+
+export async function publicStudent(id: string): Promise<Row | null> {
+  if (!id) return null;
+  if (previewMode()) return (await publicStudents()).find(row => String(row.id) === id) || null;
+  return (await select('members', { id: `eq.${id}`, type: 'eq.student' }, 'id.asc', 'id,name,direction,school,major,expertise', 1))[0] || null;
 }

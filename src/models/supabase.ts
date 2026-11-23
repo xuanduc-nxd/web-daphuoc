@@ -25,7 +25,9 @@ export async function supabaseRequest(method: string, path: string, body?: BodyI
   }
 }
 
-export async function supabaseJson(method: string, path: string, data?: Row | Row[], headers: Record<string,string> = {}): Promise<any[]> {
+export async function supabaseJson(method: string, path: string, data?: Row | Row[], headers?: Record<string,string>): Promise<any[]>;
+export async function supabaseJson(method: string, path: string, data: Row | Row[] | undefined, headers: Record<string,string>, includeHeaders: true): Promise<{ rows: any[]; headers: Headers }>;
+export async function supabaseJson(method: string, path: string, data?: Row | Row[], headers: Record<string,string> = {}, includeHeaders = false): Promise<any[] | { rows: any[]; headers: Headers }> {
   const response = await supabaseRequest(method, path, data === undefined ? undefined : JSON.stringify(data), 'application/json', headers);
   if (!response.ok) {
     let code = '', message = '';
@@ -67,11 +69,11 @@ export async function supabaseJson(method: string, path: string, data?: Row | Ro
     throw new StorageError(response.status === 409 ? 'Dữ liệu đã tồn tại hoặc bị trùng. Vui lòng kiểm tra lại.' : 'Không kết nối được dữ liệu Supabase. Kiểm tra cấu hình và các bảng đã tạo.');
   }
   const text = await response.text();
-  if (!text) return [];
+  if (!text) return includeHeaders ? { rows: [], headers: response.headers } : [];
   try {
     const value = JSON.parse(text);
     if (!Array.isArray(value)) throw new Error('not array');
-    return value;
+    return includeHeaders ? { rows: value, headers: response.headers } : value;
   } catch { throw new StorageError('Supabase trả về dữ liệu không hợp lệ.'); }
 }
 
@@ -91,6 +93,14 @@ export async function select(table: Table, filters: Record<string,string> = {}, 
     if (page.length < limit) break;
   }
   return rows;
+}
+
+export async function selectPage(table: Table, filters: Record<string,string> = {}, order = 'id.asc', columns = '*', offset = 0, limit = 10): Promise<{ rows: Row[]; total: number }> {
+  const query = new URLSearchParams({ ...filters, select: columns, order, offset: String(Math.max(0, offset)), limit: String(Math.max(1, Math.min(500, limit))) });
+  const result = await supabaseJson('GET', `${tablePath(table)}?${query}`, undefined, { Prefer: 'count=exact' }, true);
+  if (!result.rows.every(row => row && typeof row === 'object' && !Array.isArray(row))) throw new StorageError('Bản ghi Supabase không hợp lệ.');
+  const match = result.headers.get('content-range')?.match(/\/([0-9]+)$/);
+  return { rows: result.rows, total: match ? Number(match[1]) : result.rows.length };
 }
 export async function insert(table: Table, row: Row): Promise<Row> {
   const rows = await supabaseJson('POST', tablePath(table), row, { Prefer: 'return=representation' });

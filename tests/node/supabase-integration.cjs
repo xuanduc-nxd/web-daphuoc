@@ -106,8 +106,8 @@ const freePort = async () => {
       const task = async () => {
         const url = new URL(request.url, "http://127.0.0.1");
         const parts = url.pathname.split("/").filter(Boolean);
-        const send = (status, value) => {
-          response.writeHead(status, {"Content-Type":"application/json"});
+      const send = (status, value, headers = {}) => {
+        response.writeHead(status, {"Content-Type":"application/json", ...headers});
           response.end(JSON.stringify(value,(key,entry) =>
             (key === "date" || key === "expires_on") && typeof entry === "string" && /^\d{4}-\d{2}-\d{2}T/.test(entry)
               ? entry.slice(0,10) : entry));
@@ -195,6 +195,11 @@ const freePort = async () => {
             const offset = Number(url.searchParams.get("offset") || 0);
             assert(Number.isInteger(limit) && limit > 0 && Number.isInteger(offset) && offset >= 0);
             rows = (await db.query("select " + select + " from " + identifier(table) + where + " order by " + order + " limit " + limit + " offset " + offset, values)).rows;
+            const total = String(request.headers.prefer || "").includes("count=exact")
+              ? Number((await db.query("select count(*)::int as n from " + identifier(table) + where, values)).rows[0].n)
+              : null;
+            operations.push({method:request.method,table,count:rows.length,offset,limit,total});
+            return send(200, rows, total === null ? {} : {"Content-Range": `${offset}-${offset + rows.length - 1}/${total}`});
           } else if (request.method === "POST") {
             const payload = JSON.parse(bytes.toString());
             const batch = Array.isArray(payload) ? payload : [payload];
@@ -251,6 +256,11 @@ const freePort = async () => {
     await db.exec("insert into members(id,type,name,sort_order) select 'page_'||g, 'student','Pagination fixture',g from generate_series(1,501) g");
     const many = await run(node, ["--experimental-strip-types","-e","import('./src/models/repository.ts').then(async m=>console.log((await m.members()).length))"], {cwd:root,env});
     assert.equal(Number(many.stdout), memberCount + 501);
+    const studentTotal = Number((await db.query("select count(*)::int as n from members where type='student'")).rows[0].n);
+    const paged = await run(node, ["--experimental-strip-types","-e","import('./src/models/member.model.ts').then(async m=>console.log(JSON.stringify(await m.publicStudentsPage(2,10))))"], {cwd:root,env});
+    const pageResult = JSON.parse(paged.stdout.trim());
+    assert.equal(pageResult.rows.length, 10, "Student API returns only one page");
+    assert.equal(pageResult.total, studentTotal, "Student API returns the exact total");
     await db.exec("delete from members where id like 'page_%'");
     console.log("Data API pagination beyond 500 records passed");
     const webPort = await freePort();

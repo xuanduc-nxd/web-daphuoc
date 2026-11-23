@@ -178,6 +178,7 @@ body.public-site .site-footer a, body.public-site .site-footer h2 { color: #123d
 }
 .student-pagination { display: flex; justify-content: center; gap: 8px; margin: 32px 0; }
 .student-pagination a { display: grid; place-items: center; min-width: 42px; min-height: 42px; border-radius: 50%; border: 1px solid #dfeae2; background: white; color: #086653; }
+.student-pagination span { display: grid; place-items: center; min-width: 42px; min-height: 42px; color: #9aa9a0; }
 .student-pagination a:focus-visible { outline: 2px solid #086653; outline-offset: 2px; }
 .student-pagination [aria-current="page"] { background: #086653; color: white; }
 .student-back { display: inline-flex; align-items: center; gap: 8px; margin: 20px 0; color: #086653; font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 8px; transition: background-color .2s ease; }

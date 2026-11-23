@@ -40,7 +40,7 @@ export async function publicRoute(
       case 'Students.php':
         data.studentPage = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
         data.studentId = url.searchParams.get('id') || '';
-        return loadStudentsPageData(data);
+        return loadStudentsPageData(data, data.studentPage, data.studentId);
       case 'ExecutiveBoard.php':
         return loadExecutiveBoardPageData(data);
       case 'About.php':
