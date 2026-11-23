@@ -526,11 +526,14 @@ const freePort = async () => {
     assert(studentsHtml.includes('Hỗ trợ sinh viên'),"Public student page has support heading");
     for (const value of [studentForm.name,studentForm.school,studentForm.major]) assert(studentsHtml.includes(value),"Public page includes the approved student fields");
     for (const value of [studentForm.support_needs,"private-photo.jpg","Ghi chú riêng"]) assert(!studentsHtml.includes(value),"Public page hides private student fields and photo");
-    const publicStudentCard = /<a class="student-card student-directory-card"[\s\S]*?<\/a>/.exec(studentsHtml);
-    assert(publicStudentCard && !publicStudentCard[0].includes('<img'),"Student card exists and contains no image");
+    const publicStudentCard = /<(?:a|article) class="student-card student-directory-card"[\s\S]*?<\/(?:a|article)>/.exec(studentsHtml);
+    assert(publicStudentCard && !publicStudentCard[0].includes('<img') && !publicStudentCard[0].includes('student-initial'),"Student card exists and contains no image or initial avatar");
+    assert(publicStudentCard[0].includes('Xem hồ sơ'),"Student card includes clear profile link");
     const profile = await request("/Students.php?id="+encodeURIComponent(studentId));
     for (const value of [studentForm.name,studentForm.direction,studentForm.school,studentForm.major,studentForm.expertise]) assert(profile.html.includes(value),"Profile shows the approved student fields");
     for (const value of [studentForm.support_needs,"private-photo.jpg","Ghi chú riêng"]) assert(!profile.html.includes(value),"Profile hides internal data and photos");
+    const publicStudentProfile = /<main\b[^>]*\bstudent-profile\b[^>]*>[\s\S]*?<\/main>/.exec(profile.html);
+    assert(publicStudentProfile && !publicStudentProfile[0].includes('<img') && !publicStudentProfile[0].includes('student-initial'),"Student profile content contains no image or initial avatar");
     const studentListHtml = (await request("/admin/team.php?type=student")).html;
     for (const value of [studentForm.school,studentForm.major,studentForm.support_needs,studentForm.expertise]) assert(studentListHtml.includes(value),"Student admin list includes private fields");
     const sponsorPage = await request("/admin/content-edit.php?type=sponsor");

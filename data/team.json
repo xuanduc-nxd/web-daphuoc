@@ -48,5 +48,55 @@
         "major": "",
         "detail": "SInh viien VKU",
         "image": "media.php?file=team-6cecb1bc08bd5acca46b7c01.jpg"
+    },
+    {
+        "id": "sample_student_01",
+        "type": "student",
+        "name": "Nguyễn Văn An",
+        "school": "Trường Đại học Bách khoa – Đại học Đà Nẵng",
+        "major": "Công nghệ thông tin",
+        "direction": "Phát triển kỹ năng lập trình và xây dựng ứng dụng phục vụ cộng đồng.",
+        "expertise": "Phát triển web, trí tuệ nhân tạo",
+        "detail": "Hồ sơ mẫu phục vụ xem trước giao diện."
+    },
+    {
+        "id": "sample_student_02",
+        "type": "student",
+        "name": "Trần Thị Bình",
+        "school": "Trường Đại học Kinh tế – Đại học Đà Nẵng",
+        "major": "Tài chính – Ngân hàng",
+        "direction": "Rèn luyện năng lực phân tích tài chính và quản trị rủi ro doanh nghiệp.",
+        "expertise": "Phân tích dữ liệu tài chính, công nghệ tài chính",
+        "detail": "Hồ sơ mẫu phục vụ xem trước giao diện."
+    },
+    {
+        "id": "sample_student_03",
+        "type": "student",
+        "name": "Lê Hoàng Cường",
+        "school": "Trường Đại học Sư phạm Kỹ thuật – Đại học Đà Nẵng",
+        "major": "Cơ điện tử",
+        "direction": "Nghiên cứu các hệ thống tự động hóa hỗ trợ sản xuất và nông nghiệp.",
+        "expertise": "Robot, hệ thống nhúng, Internet vạn vật",
+        "detail": "Hồ sơ mẫu phục vụ xem trước giao diện."
+    },
+    {
+        "id": "sample_student_04",
+        "type": "student",
+        "name": "Phạm Mai Dung",
+        "school": "Trường Đại học Ngoại ngữ – Đại học Đà Nẵng",
+        "major": "Ngôn ngữ Anh",
+        "direction": "Phát triển kỹ năng biên phiên dịch và giao tiếp trong môi trường quốc tế.",
+        "expertise": "Biên dịch, giáo dục, giao tiếp liên văn hóa",
+        "detail": "Hồ sơ mẫu phục vụ xem trước giao diện."
+    },
+    {
+        "id": "sample_student_05",
+        "type": "student",
+        "name": "Võ Minh Đức",
+        "school": "Trường Đại học Công nghệ Thông tin và Truyền thông Việt – Hàn",
+        "major": "An toàn thông tin",
+        "direction": "Nâng cao kiến thức bảo vệ dữ liệu và phát triển phần mềm an toàn.",
+        "expertise": "An ninh mạng, bảo mật ứng dụng",
+        "detail": "Hồ sơ mẫu phục vụ xem trước giao diện."
     }
 ]

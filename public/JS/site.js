@@ -598,7 +598,6 @@
       ".team-card",
       ".student-card",
       ".honor-card",
-      ".tsnt-timeline-item",
       ".about-roadmap-card",
       ".about-support-inner > div",
       ".about-support-link",

@@ -25,7 +25,7 @@ Mỗi bài Hoạt động có thể gắn một video YouTube. Tải video lên 
 
 Link `youtube.com/watch`, `youtu.be`, Shorts và Live được chấp nhận. Để trống trường link rồi lưu để gỡ video khỏi bài viết. Việc gỡ link không xóa video trên YouTube. Video phải cho phép nhúng thì trình phát mới hoạt động.
 
-Hero trang chủ dùng ảnh tập thể thật tại public/assets/images/scholarship-group.jpg. Ảnh trang trí cảm ơn ở public/assets/images/foundation-thanks.png. Nếu dùng video YouTube ở khu vực hoạt động tiêu biểu trên trang chủ, project Supabase hiện có cần chạy [supabase-showcase-video.sql](supabase-showcase-video.sql) một lần trong SQL Editor để thêm cột `settings.showcase_video_url`.
+Hero trang chủ dùng ảnh tập thể thật tại public/assets/images/scholarship-group.jpg. Ảnh trang trí cảm ơn ở public/assets/images/foundation-thanks.webp. Nếu dùng video YouTube ở khu vực hoạt động tiêu biểu trên trang chủ, project Supabase hiện có cần chạy [supabase-showcase-video.sql](supabase-showcase-video.sql) một lần trong SQL Editor để thêm cột `settings.showcase_video_url`.
 - Các thao tác cập nhật/xóa kiểm tra version để tránh ghi đè thay đổi của người khác.
 - JSON hiện có chỉ làm nguồn nhập và bản xem trước chỉ đọc trên máy cá nhân. Website không còn gọi SheetDB. Khi Supabase lỗi, website trả HTTP 503; không âm thầm đọc hoặc ghi sang JSON.
 
@@ -62,6 +62,13 @@ Danh sách hỗ trợ tìm không dấu, lọc, sắp xếp và phân trang trê
 Ảnh mới được giới hạn 10 MB, chuyển sang WebP và thu nhỏ tối đa 2.400 px cho banner/hero, 2.000 px cho bài viết/album, 1.200 px cho thành viên/tài trợ. Giao diện tạo các biến thể responsive 480, 800, 1.200 và 2.000 px với `q_auto`/`f_auto`. Khi thay, gỡ hoặc xóa nội dung, các ảnh do website quản lý trong thư mục `clb-golf` cũng được xóa khỏi Cloudinary. Biểu mẫu Blog chỉ nhận nội dung chữ, giới hạn 3 bài mỗi giờ cho mỗi tên trên cùng địa chỉ mạng và tối đa 30 bài mỗi giờ trên một địa chỉ mạng, và cần chạy [supabase-public-blog.sql](supabase-public-blog.sql) trên project Supabase đã có.
 
 ## Kiểm tra
+
+Kiểm thử riêng danh sách và hồ sơ sinh viên (cần Chrome):
+
+    node tests/student-ui.cjs
+    node tests/student-navigation.cjs
+
+`student-ui.cjs` kiểm tra dữ liệu dài/thiếu/rỗng và giao diện desktop, mobile, màn hình trung gian. `student-navigation.cjs` tự mở máy chủ local với dữ liệu tạm, kiểm tra Tab/Enter, mở hồ sơ, quay lại và phân trang qua HTTP thật tại 390, 701, 720, 768, 800, 801, 820 và 1440px; tự dừng máy chủ và xóa dữ liệu tạm khi kết thúc. Không thêm dữ liệu mẫu vào `data/team.json`.
 
     npm run check
     npm run migrate -- --dry-run

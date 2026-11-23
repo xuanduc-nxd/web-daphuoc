@@ -44,8 +44,8 @@ export function publicFrame(
   <link rel="stylesheet" href="CSS/fonts.css">
   <link rel="stylesheet" href="CSS/icons.css">
   <link rel="stylesheet" href="CSS/site.css?v=about-overview-11">
-  <script src="JS/site.js?v=scroll-reveal-3" defer></script>
-  <link rel="stylesheet" href="CSS/foundation.css?v=webp-1">
+  <script src="JS/site.js?v=scroll-reveal-4" defer></script>
+  <link rel="stylesheet" href="CSS/foundation.css?v=student-support-2">
 </head>
 <body class="public-site">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>

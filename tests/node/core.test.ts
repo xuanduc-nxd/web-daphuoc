@@ -8,7 +8,8 @@ import { renderExecutiveBoardPage } from '../../src/views/public/pages/executive
 test('legacy content is normalized without publishing the archive', () => {
   const data=legacyDatasets();
   assert.equal(data.posts.length,9);
-  assert.equal(data.members.length,6);
+  assert.equal(data.members.length,11);
+  assert.equal(data.members.filter(row=>row.type==='student').length,5);
   assert.equal(data.about_sections.length,18);
   assert.equal(data.posts.filter(row=>row.status==='published').length,1);
   assert(data.posts.some(row=>row.legacy_id && row.content_format==='html'));
